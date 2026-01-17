@@ -1,6 +1,6 @@
 # Plan: Core Protobuf and Stdio Transport
 
-## Phase 1: Proto Definition & Code Generation
+## Phase 1: Proto Definition & Code Generation [checkpoint: 898aa02]
 - [x] Task: Create `proto/mcp.proto` based on the spec 9f65a38
 - [x] Task: Generate Go source code from proto 165d3f3
 - [x] Task: Generate Python source code from proto 165d3f3
