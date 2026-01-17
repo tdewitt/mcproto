@@ -1,7 +1,7 @@
 # Plan: Core Protobuf and Stdio Transport
 
 ## Phase 1: Proto Definition & Code Generation
-- [ ] Task: Create `proto/mcp.proto` based on the spec
+- [x] Task: Create `proto/mcp.proto` based on the spec 9f65a38
 - [ ] Task: Generate Go source code from proto
 - [ ] Task: Generate Python source code from proto
 - [ ] Task: Conductor - User Manual Verification 'Phase 1' (Protocol in workflow.md)
