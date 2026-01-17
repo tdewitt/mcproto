@@ -1,0 +1,267 @@
+syntax = "proto3";
+
+package buf.mcp.v1;
+
+import "google/protobuf/any.proto";
+import "google/protobuf/descriptor.proto";
+import "google/protobuf/struct.proto";
+
+// Base message wrapper for all proto-mcp communication
+message MCPMessage {
+  // Unique identifier for request/response correlation
+  uint64 id = 1;
+  
+  // Message payload (one of the following)
+  oneof payload {
+    InitializeRequest initialize_request = 2;
+    InitializeResponse initialize_response = 3;
+    ListToolsRequest list_tools_request = 4;
+    ListToolsResponse list_tools_response = 5;
+    CallToolRequest call_tool_request = 6;
+    CallToolResponse call_tool_response = 7;
+    ListResourcesRequest list_resources_request = 8;
+    ListResourcesResponse list_resources_response = 9;
+    ReadResourceRequest read_resource_request = 10;
+    ReadResourceResponse read_resource_response = 11;
+    ErrorResponse error_response = 12;
+  }
+}
+
+// Connection initialization and capability negotiation
+message InitializeRequest {
+  // Protocol version (e.g., "1.0.0")
+  string protocol_version = 1;
+  
+  // Client capabilities
+  ClientCapabilities capabilities = 2;
+  
+  // Client metadata (name, version, etc.)
+  map<string, string> metadata = 3;
+}
+
+message ClientCapabilities {
+  // Client supports BSR schema references
+  bool supports_bsr_refs = 1;
+  
+  // Client supports streaming responses
+  bool supports_streaming = 2;
+  
+  // Supported encodings (e.g., ["protobuf", "json"])
+  repeated string encodings = 3;
+  
+  // Client supports experimental features
+  map<string, bool> experimental = 4;
+}
+
+message InitializeResponse {
+  // Protocol version negotiated
+  string protocol_version = 1;
+  
+  // Server capabilities
+  ServerCapabilities capabilities = 2;
+  
+  // Server metadata
+  map<string, string> metadata = 3;
+}
+
+message ServerCapabilities {
+  // Server supports BSR schema references
+  bool supports_bsr_refs = 1;
+  
+  // Server supports streaming responses
+  bool supports_streaming = 2;
+  
+  // Tools available from this server
+  ToolCapabilities tools = 3;
+  
+  // Resources available from this server
+  ResourceCapabilities resources = 4;
+  
+  // Prompts available from this server
+  PromptCapabilities prompts = 5;
+}
+
+message ToolCapabilities {
+  // Whether list_changed notifications are supported
+  bool supports_list_changed = 1;
+}
+
+message ResourceCapabilities {
+  // Whether resources support subscriptions
+  bool supports_subscribe = 1;
+  
+  // Whether list_changed notifications are supported
+  bool supports_list_changed = 2;
+}
+
+message PromptCapabilities {
+  // Whether list_changed notifications are supported
+  bool supports_list_changed = 1;
+}
+
+// Tool discovery
+message ListToolsRequest {
+  // Optional filter by BSR references
+  repeated string bsr_refs = 1;
+  
+  // Include inline schema descriptors (for clients without BSR access)
+  bool include_schemas = 2;
+  
+  // Pagination cursor (for large tool catalogs)
+  string cursor = 3;
+}
+
+message ListToolsResponse {
+  // Available tools
+  repeated Tool tools = 1;
+  
+  // Next page cursor (if more results available)
+  string next_cursor = 2;
+}
+
+message Tool {
+  // Tool name (unique identifier)
+  string name = 1;
+  
+  // Human-readable description
+  string description = 2;
+  
+  // Schema definition (one of the following)
+  oneof schema_source {
+    // BSR reference (preferred)
+    string bsr_ref = 3;  // e.g., "buf.build/acme/tools/web_search:v1"
+    
+    // Inline protobuf schema (fallback)
+    google.protobuf.FileDescriptorSet inline_schema = 4;
+  }
+  
+  // Optional metadata
+  map<string, string> metadata = 5;
+}
+
+// Tool execution
+message CallToolRequest {
+  // Tool name to execute
+  string name = 1;
+  
+  // Tool arguments (proto-encoded)
+  google.protobuf.Any arguments = 2;
+  
+  // Optional metadata (e.g., trace_id, user context)
+  map<string, string> metadata = 3;
+}
+
+message CallToolResponse {
+  // Execution result
+  oneof result {
+    ToolResult success = 1;
+    Error error = 2;
+  }
+  
+  // Optional metadata (e.g., execution time, cost)
+  map<string, string> metadata = 3;
+}
+
+message ToolResult {
+  // Result content (proto-encoded)
+  repeated ToolContent content = 1;
+  
+  // Whether execution should continue
+  bool is_error = 2;
+}
+
+message ToolContent {
+  oneof content {
+    // Text content
+    string text = 1;
+    
+    // Image content (base64-encoded)
+    bytes image = 2;
+    
+    // Structured data
+    google.protobuf.Any data = 3;
+  }
+  
+  // MIME type
+  string mime_type = 4;
+}
+
+// Resource management
+message ListResourcesRequest {
+  // Pagination cursor
+  string cursor = 1;
+}
+
+message ListResourcesResponse {
+  // Available resources
+  repeated Resource resources = 1;
+  
+  // Next page cursor
+  string next_cursor = 2;
+}
+
+message Resource {
+  // Resource URI
+  string uri = 1;
+  
+  // Human-readable name
+  string name = 2;
+  
+  // Description
+  string description = 3;
+  
+  // MIME type
+  string mime_type = 4;
+  
+  // Optional metadata
+  map<string, string> metadata = 5;
+}
+
+message ReadResourceRequest {
+  // Resource URI to read
+  string uri = 1;
+}
+
+message ReadResourceResponse {
+  // Resource contents
+  repeated ResourceContent contents = 1;
+}
+
+message ResourceContent {
+  // Resource URI
+  string uri = 1;
+  
+  // MIME type
+  string mime_type = 2;
+  
+  oneof content {
+    // Text content
+    string text = 3;
+    
+    // Binary content
+    bytes blob = 4;
+  }
+}
+
+// Error handling
+message ErrorResponse {
+  // Error code
+  int32 code = 1;
+  
+  // Human-readable error message
+  string message = 2;
+  
+  // Additional error data
+  google.protobuf.Struct data = 3;
+}
+
+message Error {
+  // Error code (follows JSON-RPC error codes for compatibility)
+  int32 code = 1;
+  
+  // Error message
+  string message = 2;
+  
+  // Additional context
+  map<string, string> data = 3;
+}
