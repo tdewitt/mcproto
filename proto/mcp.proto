@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package buf.mcp.v1;
 
+option go_package = "github.com/buf/proto-mcp/go/mcp";
+
 import "google/protobuf/any.proto";
 import "google/protobuf/descriptor.proto";
 import "google/protobuf/struct.proto";
@@ -264,4 +266,13 @@ message Error {
   
   // Additional context
   map<string, string> data = 3;
+}
+
+// Service definition for network transports (gRPC)
+service MCPService {
+  rpc Initialize(InitializeRequest) returns (InitializeResponse);
+  rpc ListTools(ListToolsRequest) returns (ListToolsResponse);
+  rpc CallTool(CallToolRequest) returns (CallToolResponse);
+  rpc ListResources(ListResourcesRequest) returns (ListResourcesResponse);
+  rpc ReadResource(ReadResourceRequest) returns (ReadResourceResponse);
 }
