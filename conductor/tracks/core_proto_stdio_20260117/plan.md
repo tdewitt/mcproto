@@ -2,8 +2,8 @@
 
 ## Phase 1: Proto Definition & Code Generation
 - [x] Task: Create `proto/mcp.proto` based on the spec 9f65a38
-- [ ] Task: Generate Go source code from proto
-- [ ] Task: Generate Python source code from proto
+- [x] Task: Generate Go source code from proto 165d3f3
+- [x] Task: Generate Python source code from proto 165d3f3
 - [ ] Task: Conductor - User Manual Verification 'Phase 1' (Protocol in workflow.md)
 
 ## Phase 2: Go Stdio Framing
