@@ -7,9 +7,9 @@
 - [ ] Task: Conductor - User Manual Verification 'Phase 1' (Protocol in workflow.md)
 
 ## Phase 2: Token Simulation & Logic
-- [ ] Task: Implement the "Explicit Schema" generator (convert Proto to massive JSON Schemas)
-- [ ] Task: Implement the "Anthropic Search" simulatorTurn logic
-- [ ] Task: Implement the "proto-mcp" summary generator
+- [x] Task: Implement the "Explicit Schema" generator (convert Proto to massive JSON Schemas) 2fec2e9
+- [x] Task: Implement the "Anthropic Search" simulatorTurn logic 2fec2e9
+- [x] Task: Implement the "proto-mcp" summary generator 2fec2e9
 - [ ] Task: Conductor - User Manual Verification 'Phase 2' (Protocol in workflow.md)
 
 ## Phase 3: The Big Demo & Value Report
