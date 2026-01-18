@@ -3,6 +3,7 @@ package router
 import (
 	"fmt"
 	"io"
+	"os"
 )
 
 type Handler interface {
@@ -30,6 +31,15 @@ func (pr *ProtocolRouter) Route() error {
 	p, err := sniffer.Detect()
 	if err != nil {
 		return fmt.Errorf("failed to detect protocol: %w", err)
+	}
+
+	switch p {
+	case ProtocolJSON:
+		fmt.Fprintln(os.Stderr, "DEBUG: [Server] Sniffed '{' -> Routing to JSON-RPC Handler")
+	case ProtocolBinary:
+		fmt.Fprintln(os.Stderr, "DEBUG: [Server] Sniffed binary prefix -> Routing to Protobuf Handler")
+	default:
+		fmt.Fprintln(os.Stderr, "DEBUG: [Server] Sniffed unknown format -> Routing to Unknown Handler")
 	}
 
 	handler, ok := pr.handlers[p]

@@ -9,7 +9,8 @@ import (
 )
 
 func TestBinaryHandler(t *testing.T) {
-	handler := &BinaryHandler{}
+	registry := mcp.NewUnifiedRegistry()
+	handler := NewBinaryHandler(registry)
 	
 	msg := &mcp.MCPMessage{
 		Id: 1,

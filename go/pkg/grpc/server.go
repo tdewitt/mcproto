@@ -9,11 +9,13 @@ import (
 // Server implements the mcp.MCPServiceServer interface.
 type Server struct {
 	mcp.UnimplementedMCPServiceServer
-	// TODO: Add ToolRegistry here in Phase 2
+	registry *mcp.UnifiedRegistry
 }
 
-func NewServer() *Server {
-	return &Server{}
+func NewServer(r *mcp.UnifiedRegistry) *Server {
+	return &Server{
+		registry: r,
+	}
 }
 
 func (s *Server) Initialize(ctx context.Context, req *mcp.InitializeRequest) (*mcp.InitializeResponse, error) {
@@ -31,13 +33,31 @@ func (s *Server) Initialize(ctx context.Context, req *mcp.InitializeRequest) (*m
 }
 
 func (s *Server) ListTools(ctx context.Context, req *mcp.ListToolsRequest) (*mcp.ListToolsResponse, error) {
-	// Minimal implementation for now, will be populated in Phase 2
-	return &mcp.ListToolsResponse{}, nil
+	// The gRPC ListTools can also support search if we add a field, 
+	// but for now we'll just use the registry.
+	return &mcp.ListToolsResponse{
+		Tools: s.registry.List(""),
+	}, nil
 }
 
 func (s *Server) CallTool(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResponse, error) {
-	// Minimal implementation for now
-	return &mcp.CallToolResponse{}, nil
+	result, err := s.registry.Call(ctx, req.Name, req.Arguments.Value)
+	if err != nil {
+		return &mcp.CallToolResponse{
+			Result: &mcp.CallToolResponse_Error{
+				Error: &mcp.Error{
+					Code:    -32603,
+					Message: err.Error(),
+				},
+			},
+		}, nil
+	}
+
+	return &mcp.CallToolResponse{
+		Result: &mcp.CallToolResponse_Success{
+			Success: result,
+		},
+	}, nil
 }
 
 func (s *Server) ListResources(ctx context.Context, req *mcp.ListResourcesRequest) (*mcp.ListResourcesResponse, error) {

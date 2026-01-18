@@ -4,21 +4,11 @@ import (
 	"log"
 	"os"
 
+	"github.com/misfitdev/proto-mcp/go/pkg/mcp"
 	"github.com/misfitdev/proto-mcp/go/router"
 )
 
-type stdioReadWriter struct {
-	reader *os.File
-	writer *os.File
-}
-
-func (s *stdioReadWriter) Read(p []byte) (n int, err error) {
-	return s.reader.Read(p)
-}
-
-func (s *stdioReadWriter) Write(p []byte) (n int, err error) {
-	return s.writer.Write(p)
-}
+// ... stdioReadWriter implementation ...
 
 func main() {
 	rw := &stdioReadWriter{
@@ -26,9 +16,12 @@ func main() {
 		writer: os.Stdout,
 	}
 
+	registry := mcp.NewUnifiedRegistry()
+	// No tools registered for the simple echo-server for now
+
 	pr := router.NewProtocolRouter(rw)
 	pr.Register(router.ProtocolJSON, &router.JSONHandler{})
-	pr.Register(router.ProtocolBinary, &router.BinaryHandler{})
+	pr.Register(router.ProtocolBinary, router.NewBinaryHandler(registry))
 
 	if err := pr.Route(); err != nil {
 		log.Fatalf("Router failed: %v", err)
