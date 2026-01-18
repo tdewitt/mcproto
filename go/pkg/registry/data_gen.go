@@ -3,13 +3,13 @@ package registry
 import (
 	"time"
 
-	"github.com/misfitdev/proto-mcp/go/mcp"
+	"github.com/misfitdev/proto-mcp/go/mcp/analytics"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // GenerateLeadEvent creates a deterministic mock event for testing.
-func GenerateLeadEvent() *mcp.Event {
+func GenerateLeadEvent() *analytics.Event {
 	// Fixed data for reproducibility
 	payload, _ := structpb.NewStruct(map[string]interface{}{
 		"email":      "test-lead@example.com",
@@ -22,7 +22,7 @@ func GenerateLeadEvent() *mcp.Event {
 		},
 	})
 
-	return &mcp.Event{
+	return &analytics.Event{
 		Id:        "evt_12345",
 		Domain:    "marketing_leads",
 		Timestamp: timestamppb.New(time.Date(2026, 1, 17, 12, 0, 0, 0, time.UTC)),
