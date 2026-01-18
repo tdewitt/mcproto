@@ -2,7 +2,7 @@
 
 ## Phase 1: gRPC Transport Implementation
 - [x] Task: Implement the `MCPService` gRPC server in Go a7ad620
-- [ ] Task: Implement the `MCPService` gRPC client in Python
+- [x] Task: Implement the `MCPService` gRPC client in Python 08840e9
 - [ ] Task: Verify gRPC interop with a simple echo call
 - [ ] Task: Conductor - User Manual Verification 'Phase 1' (Protocol in workflow.md)
 
