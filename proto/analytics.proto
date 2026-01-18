@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+package misfit.analytics.v1;
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/any.proto";
+
+option go_package = "github.com/misfitdev/proto-mcp/go/pkg/analytics";
+
+// A generic data event in the pipeline
+message Event {
+  string id = 1;
+  string domain = 2; // e.g., "marketing", "auth", "billing"
+  google.protobuf.Timestamp timestamp = 3;
+  
+  // The actual variable payload
+  google.protobuf.Struct payload = 4;
+}
+
+// Extraction Request
+message ExtractRequest {
+  string source_id = 1;
+  int32 batch_size = 2;
+  map<string, string> filters = 3;
+}
+
+// Transformation/Mapping Rule
+message TransformRequest {
+  Event event = 1;
+  
+  // A complex rule set showing nested schema overhead
+  message Rule {
+    string target_field = 1;
+    string transform_op = 2; // e.g., "uppercase", "hash", "mask"
+    string fallback_value = 3;
+  }
+  repeated Rule rules = 2;
+}
+
+// Loading/Sink Request
+message LoadRequest {
+  string target_bucket = 1;
+  repeated Event events = 2;
+  bool overwrite = 3;
+}
+
+// A tool definition inside the BSR
+service AnalyticsService {
+  rpc Extract(ExtractRequest) returns (stream Event);
+  rpc Transform(TransformRequest) returns (Event);
+  rpc Load(LoadRequest) returns (LoadResponse);
+}
+
+message LoadResponse {
+  int32 processed_count = 1;
+  string status = 2;
+}
