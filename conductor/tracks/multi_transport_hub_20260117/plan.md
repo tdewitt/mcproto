@@ -3,7 +3,7 @@
 ## Phase 1: gRPC Transport Implementation
 - [x] Task: Implement the `MCPService` gRPC server in Go a7ad620
 - [x] Task: Implement the `MCPService` gRPC client in Python 08840e9
-- [ ] Task: Verify gRPC interop with a simple echo call
+- [x] Task: Verify gRPC interop with a simple echo call f527ece
 - [ ] Task: Conductor - User Manual Verification 'Phase 1' (Protocol in workflow.md)
 
 ## Phase 2: Unified Tool Engine & High-Scale Catalog
