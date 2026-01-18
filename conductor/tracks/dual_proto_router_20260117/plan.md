@@ -2,7 +2,7 @@
 
 ## Phase 1: Sniffing Logic
 - [x] Task: Implement the `Sniffer` in Go that reads the first byte without consuming the stream incorrectly 142ebc5
-- [ ] Task: Unit tests for protocol detection (JSON vs Binary)
+- [x] Task: Unit tests for protocol detection (JSON vs Binary) 142ebc5
 - [ ] Task: Conductor - User Manual Verification 'Phase 1' (Protocol in workflow.md)
 
 ## Phase 2: Router Implementation
