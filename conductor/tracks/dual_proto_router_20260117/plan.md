@@ -5,7 +5,7 @@
 - [x] Task: Unit tests for protocol detection (JSON vs Binary) 142ebc5
 - [ ] Task: Conductor - User Manual Verification 'Phase 1' (Protocol in workflow.md)
 
-## Phase 2: Router Implementation
+## Phase 2: Router Implementation [checkpoint: 3dc5c34]
 - [x] Task: Implement the `ProtocolRouter` that wraps an `io.ReadWriter` and dispatches to handlers 106fe3e
 - [x] Task: Implement a minimal JSON-RPC handler for `initialize` to prove compatibility 70c6790
 - [x] Task: Update the Go server to use the `ProtocolRouter` 68cb291
