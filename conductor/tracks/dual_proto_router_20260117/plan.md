@@ -6,7 +6,7 @@
 - [ ] Task: Conductor - User Manual Verification 'Phase 1' (Protocol in workflow.md)
 
 ## Phase 2: Router Implementation
-- [ ] Task: Implement the `ProtocolRouter` that wraps an `io.ReadWriter` and dispatches to handlers
+- [x] Task: Implement the `ProtocolRouter` that wraps an `io.ReadWriter` and dispatches to handlers 106fe3e
 - [ ] Task: Implement a minimal JSON-RPC handler for `initialize` to prove compatibility
 - [ ] Task: Update the Go server to use the `ProtocolRouter`
 - [ ] Task: Conductor - User Manual Verification 'Phase 2' (Protocol in workflow.md)
