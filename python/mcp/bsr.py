@@ -61,8 +61,8 @@ class BSRClient:
         fds = FileDescriptorSet()
         for file_data in files:
             fd = FileDescriptorProto()
-            # json_format.ParseDict handles the JSON representation of FileDescriptorProto
-            json_format.ParseDict(file_data, fd)
+            # ignore_unknown_fields=True handles the 'bufExtension' fields
+            json_format.ParseDict(file_data, fd, ignore_unknown_fields=True)
             fds.file.append(fd)
             
         return fds

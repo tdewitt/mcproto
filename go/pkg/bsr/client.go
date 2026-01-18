@@ -114,10 +114,12 @@ func (c *Client) FetchDescriptorSet(ctx context.Context, ref *BSRRef) (*descript
 	}
 
 	fds := &descriptorpb.FileDescriptorSet{}
+	unmarshaler := protojson.UnmarshalOptions{
+		DiscardUnknown: true,
+	}
 	for _, fileJSON := range imageResp.Image.File {
 		fd := &descriptorpb.FileDescriptorProto{}
-		// protojson.Unmarshal handles the JSON representation of FileDescriptorProto
-		if err := protojson.Unmarshal(fileJSON, fd); err != nil {
+		if err := unmarshaler.Unmarshal(fileJSON, fd); err != nil {
 			return nil, fmt.Errorf("failed to unmarshal file descriptor: %w", err)
 		}
 		fds.File = append(fds.File, fd)
