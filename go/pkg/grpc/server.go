@@ -33,10 +33,8 @@ func (s *Server) Initialize(ctx context.Context, req *mcp.InitializeRequest) (*m
 }
 
 func (s *Server) ListTools(ctx context.Context, req *mcp.ListToolsRequest) (*mcp.ListToolsResponse, error) {
-	// The gRPC ListTools can also support search if we add a field, 
-	// but for now we'll just use the registry.
 	return &mcp.ListToolsResponse{
-		Tools: s.registry.List(""),
+		Tools: s.registry.List(req.Query),
 	}, nil
 }
 

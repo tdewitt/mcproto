@@ -339,9 +339,12 @@ class ListToolsRequest(_message.Message):
 
     DESCRIPTOR: _descriptor.Descriptor
 
+    QUERY_FIELD_NUMBER: _builtins.int
     BSR_REFS_FIELD_NUMBER: _builtins.int
     INCLUDE_SCHEMAS_FIELD_NUMBER: _builtins.int
     CURSOR_FIELD_NUMBER: _builtins.int
+    query: _builtins.str
+    """Optional search query to filter tools by name or description"""
     include_schemas: _builtins.bool
     """Include inline schema descriptors (for clients without BSR access)"""
     cursor: _builtins.str
@@ -353,11 +356,12 @@ class ListToolsRequest(_message.Message):
     def __init__(
         self,
         *,
+        query: _builtins.str = ...,
         bsr_refs: _abc.Iterable[_builtins.str] | None = ...,
         include_schemas: _builtins.bool = ...,
         cursor: _builtins.str = ...,
     ) -> None: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["bsr_refs", b"bsr_refs", "cursor", b"cursor", "include_schemas", b"include_schemas"]  # noqa: Y015
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["bsr_refs", b"bsr_refs", "cursor", b"cursor", "include_schemas", b"include_schemas", "query", b"query"]  # noqa: Y015
     def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
 
 Global___ListToolsRequest: _TypeAlias = ListToolsRequest  # noqa: Y015

@@ -28,17 +28,29 @@ class Registry:
         else:
             fds = self.cache[repo_id]
 
-        # 3. Add to pool
+        # 3. Add to pool (including dependencies)
+        # BSR returns a full Image which usually has all non-standard dependencies.
+        # But for well-known types, we might need to be careful.
         for fd in fds.file:
             try:
-                self.pool.Add(fd)
+                self.pool.AddSerializedFile(fd.SerializeToString())
             except Exception:
-                # File might already be added
                 pass
 
         # 4. Return message class
-        descriptor = self.pool.FindMessageTypeByName(ref.message)
-        return GetMessageClass(descriptor)
+        try:
+            descriptor = self.pool.FindMessageTypeByName(ref.message)
+            return GetMessageClass(descriptor)
+        except KeyError:
+            # If still not found, it might be because the name in BSR image 
+            # doesn't match the ref.message exactly (e.g. leading dot).
+            for fd in fds.file:
+                for mt in fd.message_type:
+                    full_name = f"{fd.package}.{mt.name}" if fd.package else mt.name
+                    if full_name == ref.message:
+                        descriptor = self.pool.FindMessageTypeByName(full_name)
+                        return GetMessageClass(descriptor)
+            raise
 
     def unpack(self, any_msg: Any) -> Any:
         # any_msg is a google.protobuf.any_pb2.Any

@@ -103,14 +103,17 @@ message PromptCapabilities {
 
 // Tool discovery
 message ListToolsRequest {
+  // Optional search query to filter tools by name or description
+  string query = 1;
+
   // Optional filter by BSR references
-  repeated string bsr_refs = 1;
+  repeated string bsr_refs = 2;
   
   // Include inline schema descriptors (for clients without BSR access)
-  bool include_schemas = 2;
+  bool include_schemas = 3;
   
   // Pagination cursor (for large tool catalogs)
-  string cursor = 3;
+  string cursor = 4;
 }
 
 message ListToolsResponse {

@@ -47,7 +47,7 @@ func (h *BinaryHandler) Handle(rw io.ReadWriter) error {
 				Id: msg.Id,
 				Payload: &mcp.MCPMessage_ListToolsResponse{
 					ListToolsResponse: &mcp.ListToolsResponse{
-						Tools: h.registry.List(""), // We could support search in binary too
+						Tools: h.registry.List(payload.ListToolsRequest.Query),
 					},
 				},
 			}

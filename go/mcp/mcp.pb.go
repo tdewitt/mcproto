@@ -689,12 +689,14 @@ func (x *PromptCapabilities) GetSupportsListChanged() bool {
 // Tool discovery
 type ListToolsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
+	// Optional search query to filter tools by name or description
+	Query string `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"`
 	// Optional filter by BSR references
-	BsrRefs []string `protobuf:"bytes,1,rep,name=bsr_refs,json=bsrRefs,proto3" json:"bsr_refs,omitempty"`
+	BsrRefs []string `protobuf:"bytes,2,rep,name=bsr_refs,json=bsrRefs,proto3" json:"bsr_refs,omitempty"`
 	// Include inline schema descriptors (for clients without BSR access)
-	IncludeSchemas bool `protobuf:"varint,2,opt,name=include_schemas,json=includeSchemas,proto3" json:"include_schemas,omitempty"`
+	IncludeSchemas bool `protobuf:"varint,3,opt,name=include_schemas,json=includeSchemas,proto3" json:"include_schemas,omitempty"`
 	// Pagination cursor (for large tool catalogs)
-	Cursor        string `protobuf:"bytes,3,opt,name=cursor,proto3" json:"cursor,omitempty"`
+	Cursor        string `protobuf:"bytes,4,opt,name=cursor,proto3" json:"cursor,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -727,6 +729,13 @@ func (x *ListToolsRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use ListToolsRequest.ProtoReflect.Descriptor instead.
 func (*ListToolsRequest) Descriptor() ([]byte, []int) {
 	return file_mcp_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *ListToolsRequest) GetQuery() string {
+	if x != nil {
+		return x.Query
+	}
+	return ""
 }
 
 func (x *ListToolsRequest) GetBsrRefs() []string {
@@ -1794,11 +1803,12 @@ const file_mcp_proto_rawDesc = "" +
 	"\x12supports_subscribe\x18\x01 \x01(\bR\x11supportsSubscribe\x122\n" +
 	"\x15supports_list_changed\x18\x02 \x01(\bR\x13supportsListChanged\"H\n" +
 	"\x12PromptCapabilities\x122\n" +
-	"\x15supports_list_changed\x18\x01 \x01(\bR\x13supportsListChanged\"n\n" +
-	"\x10ListToolsRequest\x12\x19\n" +
-	"\bbsr_refs\x18\x01 \x03(\tR\absrRefs\x12'\n" +
-	"\x0finclude_schemas\x18\x02 \x01(\bR\x0eincludeSchemas\x12\x16\n" +
-	"\x06cursor\x18\x03 \x01(\tR\x06cursor\"\\\n" +
+	"\x15supports_list_changed\x18\x01 \x01(\bR\x13supportsListChanged\"\x84\x01\n" +
+	"\x10ListToolsRequest\x12\x14\n" +
+	"\x05query\x18\x01 \x01(\tR\x05query\x12\x19\n" +
+	"\bbsr_refs\x18\x02 \x03(\tR\absrRefs\x12'\n" +
+	"\x0finclude_schemas\x18\x03 \x01(\bR\x0eincludeSchemas\x12\x16\n" +
+	"\x06cursor\x18\x04 \x01(\tR\x06cursor\"\\\n" +
 	"\x11ListToolsResponse\x12&\n" +
 	"\x05tools\x18\x01 \x03(\v2\x10.buf.mcp.v1.ToolR\x05tools\x12\x1f\n" +
 	"\vnext_cursor\x18\x02 \x01(\tR\n" +
