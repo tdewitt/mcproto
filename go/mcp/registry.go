@@ -52,3 +52,37 @@ func (r *UnifiedRegistry) Call(ctx context.Context, name string, args []byte) (*
 	}
 	return entry.Handler(ctx, args)
 }
+
+// GenerateMockCatalog populates the registry with 1,000 coding-themed tools.
+func (r *UnifiedRegistry) GenerateMockCatalog() {
+	prefixes := []string{"git", "fs", "db", "net", "sys", "cloud", "ai", "test", "build", "deploy"}
+	verbs := []string{"read", "write", "list", "query", "exec", "sync", "scan", "analyze", "delete", "create"}
+
+	// Use GetModuleRequest as a placeholder BSR ref for all mock tools
+	toolRef := "buf.build/bufbuild/registry/buf.registry.module.v1.Module:main"
+
+	for i := 0; i < 1000; i++ {
+		prefix := prefixes[(i/100)%len(prefixes)]
+		verb := verbs[(i/10)%len(verbs)]
+		name := fmt.Sprintf("%s_%s_%d", prefix, verb, i)
+		desc := fmt.Sprintf("Mock tool for %s operation on %s service (Instance %d)", verb, prefix, i)
+
+		r.Register(&mcp.Tool{
+			Name:        name,
+			Description: desc,
+			SchemaSource: &mcp.Tool_BsrRef{
+				BsrRef: toolRef,
+			},
+		}, func(ctx context.Context, args []byte) (*mcp.ToolResult, error) {
+			return &mcp.ToolResult{
+				Content: []*mcp.ToolContent{
+					{
+						Content: &mcp.ToolContent_Text{
+							Text: fmt.Sprintf("Executed %s successfully.", name),
+						},
+					},
+				},
+			}, nil
+		})
+	}
+}
