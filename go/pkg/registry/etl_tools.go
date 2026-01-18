@@ -10,10 +10,10 @@ import (
 // PopulateETLTools adds 12 realistic ETL tools to the registry.
 func (r *UnifiedRegistry) PopulateETLTools() {
 	// BSR references for the analytics specs
-	const base = "buf.build/misfit/analytics/v1"
-	extractRef := base + ".ExtractRequest:main"
-	transformRef := base + ".TransformRequest:main"
-	loadRef := base + ".LoadRequest:main"
+	const base = "buf.build/mcpb/analytics"
+	extractRef := base + "/misfit.analytics.v1.ExtractRequest:main"
+	transformRef := base + "/misfit.analytics.v1.TransformRequest:main"
+	loadRef := base + "/misfit.analytics.v1.LoadRequest:main"
 
 	// --- EXTRACT TOOLS ---
 	r.Register(&mcp.Tool{
