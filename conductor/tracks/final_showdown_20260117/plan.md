@@ -1,9 +1,9 @@
 # Plan: Final Showdown
 
 ## Phase 1: Analytics Server Implementation
-- [ ] Task: Implement the 12 ETL tools in Go using the `UnifiedRegistry`
-- [ ] Task: Create a deterministic "Fake Data" generator for lead events
-- [ ] Task: Verify tool logic with local unit tests
+- [x] Task: Implement the 12 ETL tools in Go using the `UnifiedRegistry` 11100ab
+- [x] Task: Create a deterministic "Fake Data" generator for lead events 70ab6fa
+- [x] Task: Verify tool logic with local unit tests 0aeac2b
 - [ ] Task: Conductor - User Manual Verification 'Phase 1' (Protocol in workflow.md)
 
 ## Phase 2: Token Simulation & Logic
