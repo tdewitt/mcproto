@@ -8,7 +8,7 @@
 ## Phase 2: Router Implementation
 - [x] Task: Implement the `ProtocolRouter` that wraps an `io.ReadWriter` and dispatches to handlers 106fe3e
 - [x] Task: Implement a minimal JSON-RPC handler for `initialize` to prove compatibility 70c6790
-- [ ] Task: Update the Go server to use the `ProtocolRouter`
+- [x] Task: Update the Go server to use the `ProtocolRouter` 68cb291
 - [ ] Task: Conductor - User Manual Verification 'Phase 2' (Protocol in workflow.md)
 
 ## Phase 3: Integration & Compatibility Proof
