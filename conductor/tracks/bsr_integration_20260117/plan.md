@@ -1,9 +1,9 @@
 # Plan: BSR Integration
 
 ## Phase 1: BSR Client Implementation
-- [ ] Task: Implement the Go BSR client to fetch descriptors via the Buf API
-- [ ] Task: Implement the Python BSR client to fetch descriptors via the Buf API
-- [ ] Task: Unit tests for registry fetching (mocking the BSR API)
+- [x] Task: Implement the Go BSR client to fetch descriptors via the Buf API 1e406e4
+- [x] Task: Implement the Python BSR client to fetch descriptors via the Buf API 1e406e4
+- [x] Task: Unit tests for registry fetching (mocking the BSR API) 1e406e4
 - [ ] Task: Conductor - User Manual Verification 'Phase 1' (Protocol in workflow.md)
 
 ## Phase 2: Dynamic Schema Resolution
