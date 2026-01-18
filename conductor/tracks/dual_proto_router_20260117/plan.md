@@ -1,6 +1,6 @@
 # Plan: Dual-Protocol Router
 
-## Phase 1: Sniffing Logic
+## Phase 1: Sniffing Logic [checkpoint: b78e352]
 - [x] Task: Implement the `Sniffer` in Go that reads the first byte without consuming the stream incorrectly 142ebc5
 - [x] Task: Unit tests for protocol detection (JSON vs Binary) 142ebc5
 - [ ] Task: Conductor - User Manual Verification 'Phase 1' (Protocol in workflow.md)
