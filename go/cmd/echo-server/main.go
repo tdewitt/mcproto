@@ -4,22 +4,33 @@ import (
 	"log"
 	"os"
 
-	"github.com/misfitdev/proto-mcp/go/stdio"
+	"github.com/misfitdev/proto-mcp/go/router"
 )
 
+type stdioReadWriter struct {
+	reader *os.File
+	writer *os.File
+}
+
+func (s *stdioReadWriter) Read(p []byte) (n int, err error) {
+	return s.reader.Read(p)
+}
+
+func (s *stdioReadWriter) Write(p []byte) (n int, err error) {
+	return s.writer.Write(p)
+}
+
 func main() {
-	reader := stdio.NewReader(os.Stdin)
-	writer := stdio.NewWriter(os.Stdout)
+	rw := &stdioReadWriter{
+		reader: os.Stdin,
+		writer: os.Stdout,
+	}
 
-	for {
-		msg, err := reader.ReadMessage()
-		if err != nil {
-			log.Fatalf("Error reading message: %v", err)
-		}
+	pr := router.NewProtocolRouter(rw)
+	pr.Register(router.ProtocolJSON, &router.JSONHandler{})
+	pr.Register(router.ProtocolBinary, &router.BinaryHandler{})
 
-		// Echo the message back
-		if err := writer.WriteMessage(msg); err != nil {
-			log.Fatalf("Error writing message: %v", err)
-		}
+	if err := pr.Route(); err != nil {
+		log.Fatalf("Router failed: %v", err)
 	}
 }
