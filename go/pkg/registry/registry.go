@@ -1,7 +1,8 @@
-package mcp
+package registry
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/misfitdev/proto-mcp/go/mcp"

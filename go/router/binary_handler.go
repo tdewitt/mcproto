@@ -6,14 +6,15 @@ import (
 	"io"
 
 	"github.com/misfitdev/proto-mcp/go/mcp"
+	"github.com/misfitdev/proto-mcp/go/pkg/registry"
 	"github.com/misfitdev/proto-mcp/go/stdio"
 )
 
 type BinaryHandler struct {
-	registry *mcp.UnifiedRegistry
+	registry *registry.UnifiedRegistry
 }
 
-func NewBinaryHandler(r *mcp.UnifiedRegistry) *BinaryHandler {
+func NewBinaryHandler(r *registry.UnifiedRegistry) *BinaryHandler {
 	return &BinaryHandler{registry: r}
 }
 

@@ -5,11 +5,12 @@ import (
 	"testing"
 
 	"github.com/misfitdev/proto-mcp/go/mcp"
+	"github.com/misfitdev/proto-mcp/go/pkg/registry"
 	"github.com/misfitdev/proto-mcp/go/stdio"
 )
 
 func TestBinaryHandler(t *testing.T) {
-	registry := mcp.NewUnifiedRegistry()
+	registry := registry.NewUnifiedRegistry()
 	handler := NewBinaryHandler(registry)
 	
 	msg := &mcp.MCPMessage{

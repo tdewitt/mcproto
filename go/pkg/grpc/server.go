@@ -4,15 +4,16 @@ import (
 	"context"
 
 	"github.com/misfitdev/proto-mcp/go/mcp"
+	"github.com/misfitdev/proto-mcp/go/pkg/registry"
 )
 
 // Server implements the mcp.MCPServiceServer interface.
 type Server struct {
 	mcp.UnimplementedMCPServiceServer
-	registry *mcp.UnifiedRegistry
+	registry *registry.UnifiedRegistry
 }
 
-func NewServer(r *mcp.UnifiedRegistry) *Server {
+func NewServer(r *registry.UnifiedRegistry) *Server {
 	return &Server{
 		registry: r,
 	}
