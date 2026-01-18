@@ -1,7 +1,7 @@
 # Plan: Multi-Transport Tool Hub
 
 ## Phase 1: gRPC Transport Implementation
-- [ ] Task: Implement the `MCPService` gRPC server in Go
+- [x] Task: Implement the `MCPService` gRPC server in Go a7ad620
 - [ ] Task: Implement the `MCPService` gRPC client in Python
 - [ ] Task: Verify gRPC interop with a simple echo call
 - [ ] Task: Conductor - User Manual Verification 'Phase 1' (Protocol in workflow.md)
