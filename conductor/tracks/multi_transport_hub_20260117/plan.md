@@ -9,7 +9,7 @@
 ## Phase 2: Unified Tool Engine & High-Scale Catalog
 - [x] Task: Refactor Go server to use a shared Tool Registry for both transports b2bbaf6
 - [x] Task: Implement a "Mock Factory" that generates 1,000 tools with unique descriptions 436c7d7
-- [ ] Task: Implement the `ListTools` search/filter logic on the server
+- [x] Task: Implement the `ListTools` search/filter logic on the server 3028fa7
 - [ ] Task: Conductor - User Manual Verification 'Phase 2' (Protocol in workflow.md)
 
 ## Phase 3: The 1,000 Tool Challenge (Boss Demo)
