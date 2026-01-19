@@ -1,0 +1,5 @@
+go = "1.21.6"
+buf = "1.28.1"
+
+[plugins.tools]
+buf = "https://raw.githubusercontent.com/stk0vrfl0w/proto-toml-plugins/main/plugins/buf.toml"

@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/misfitdev/proto-mcp/go/pkg/bsr"
 	"github.com/misfitdev/proto-mcp/go/pkg/registry"
 	"github.com/misfitdev/proto-mcp/go/router"
 )
@@ -16,7 +17,8 @@ func main() {
 		writer: os.Stdout,
 	}
 
-	reg := registry.NewUnifiedRegistry()
+	bsrClient := bsr.NewClient()
+	reg := registry.NewUnifiedRegistry(bsrClient)
 	// No tools registered for the simple echo-server for now
 
 	pr := router.NewProtocolRouter(rw)

@@ -23,7 +23,7 @@ func main() {
 	toolRef := "buf.build/bufbuild/registry/buf.registry.module.v1.Module:main"
 
 	// We also need a UnifiedRegistry for tool management in dynamic-server
-	toolReg := registry.NewUnifiedRegistry()
+	toolReg := registry.NewUnifiedRegistry(client)
 	toolReg.Register(&mcp.Tool{
 		Name:        "get_module_info",
 		Description: "Dynamically resolved BSR tool (Module)",

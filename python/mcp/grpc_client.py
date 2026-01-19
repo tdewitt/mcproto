@@ -17,8 +17,8 @@ class GRPCClient:
         )
         return self.stub.Initialize(req)
 
-    def list_tools(self, cursor: Optional[str] = None) -> mcp_pb2.ListToolsResponse:
-        req = mcp_pb2.ListToolsRequest(cursor=cursor)
+    def list_tools(self, query: Optional[str] = None, cursor: Optional[str] = None) -> mcp_pb2.ListToolsResponse:
+        req = mcp_pb2.ListToolsRequest(query=query, cursor=cursor)
         return self.stub.ListTools(req)
 
     def call_tool(self, name: str, arguments: mcp_pb2.google_dot_protobuf_dot_any__pb2.Any) -> mcp_pb2.CallToolResponse:

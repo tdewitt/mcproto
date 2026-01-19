@@ -44,3 +44,12 @@ func TestGenerateLeadEvent(t *testing.T) {
 		t.Errorf("Expected email test-lead@example.com, got %s", email)
 	}
 }
+
+func TestGenerateMockCatalog(t *testing.T) {
+	reg := NewUnifiedRegistry()
+	reg.GenerateMockCatalog()
+	tools := reg.List("")
+	if len(tools) != 1000 {
+		t.Errorf("Expected 1000 tools, got %d", len(tools))
+	}
+}

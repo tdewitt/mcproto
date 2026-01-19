@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/misfitdev/proto-mcp/go/mcp"
+	"github.com/misfitdev/proto-mcp/go/pkg/bsr"
 )
 
 // ToolHandler is a function that executes a tool call.
@@ -19,12 +20,14 @@ type ToolEntry struct {
 
 // UnifiedRegistry is a transport-agnostic registry of tools.
 type UnifiedRegistry struct {
-	tools map[string]ToolEntry
+	tools     map[string]ToolEntry
+	bsrClient *bsr.Client
 }
 
-func NewUnifiedRegistry() *UnifiedRegistry {
+func NewUnifiedRegistry(c *bsr.Client) *UnifiedRegistry {
 	return &UnifiedRegistry{
-		tools: make(map[string]ToolEntry),
+		tools:     make(map[string]ToolEntry),
+		bsrClient: c,
 	}
 }
 

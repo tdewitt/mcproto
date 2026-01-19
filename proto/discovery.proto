@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package misfit.discovery.v1;
+
+option go_package = "github.com/misfitdev/proto-mcp/go/pkg/discovery";
+
+// Request to search for tools/messages in the registry
+message SearchRegistryRequest {
+  string query = 1;
+  int32 limit = 2;
+}
+
+// A single discovery result
+message ToolCandidate {
+  string name = 1;
+  string description = 2;
+  string bsr_ref = 3;
+}
+
+// Response containing potential tool matches
+message SearchRegistryResponse {
+  repeated ToolCandidate candidates = 1;
+}
+
+// The Discovery Service definition
+service DiscoveryService {
+  rpc SearchRegistry(SearchRegistryRequest) returns (SearchRegistryResponse);
+}

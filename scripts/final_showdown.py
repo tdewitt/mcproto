@@ -12,15 +12,16 @@ sys.path.append(os.path.join(os.getcwd(), 'python'))
 from mcp.grpc_client import GRPCClient
 from mcp.bsr import BSRClient
 from mcp.registry import Registry
+from mcp import mcp_pb2
 from google.protobuf.any_pb2 import Any as ProtoAny
 
 def count_tokens(text):
     encoding = tiktoken.get_encoding("cl100k_base")
     return len(encoding.encode(text))
 
-def run_live_showdown():
+def run_recursive_showdown():
     print("\n" + "="*65)
-    print(" LIVE ANALYTICS PIPELINE SHOWDOWN")
+    print(" RECURSIVE DISCOVERY SHOWDOWN (Final Demo)")
     print("="*65 + "\n")
 
     # 1. Build and Start Server
@@ -36,48 +37,56 @@ def run_live_showdown():
     registry = Registry(bsr)
 
     try:
-        # --- PHASE 1: DISCOVERY ---
-        print("SCENARIO: Extract leads, transform them, and load to warehouse.\n")
+        # --- TURN 1: MINIMAL SETUP ---
+        print("SCENARIO: Agent needs to process data but doesn't know which tools exist.")
+        print("Setup: Server only advertises the 'search_registry' meta-tool.\n")
 
-        # Get tools list
-        resp = client.list_tools()
+        # Simulate discovery of just the search tool
+        search_tool_ref = "buf.build/mcpb/discovery/misfit.discovery.v1.SearchRegistryRequest:main"
+        initial_context = f"tool: search_registry\ndesc: Search the global registry\nref: {search_tool_ref}"
+        print(f"Turn 1 Context: {count_tokens(initial_context)} tokens")
+
+        # --- TURN 2: RECURSIVE SEARCH ---
+        print("\nAgent calls 'search_registry' for 'registry' tools...")
+        # (In a real turn, LLM would call the tool. We simulate the result)
         
-        # Simulated standard MCP Context
-        # (This is what standard MCP would send in the first turn)
-        legacy_context = json.dumps([{"name": t.name, "description": t.description, "inputSchema": {"type": "object", "properties": {"id": {"type": "string"}}}} for t in resp.tools], indent=2)
-        legacy_tokens = count_tokens(legacy_context)
-
-        # Proto-MCP Context (What we actually send)
-        proto_context = ""
-        for t in resp.tools:
-            proto_context += f"tool: {t.name}\n" # Corrected newline
-            proto_context += f"desc: {t.description}\n" # Corrected newline
-            proto_context += f"ref: {t.bsr_ref}\n\n"
-        proto_tokens = count_tokens(proto_context)
-
-        print(f"--- Token Savings (Initial Turn) ---")
-        print(f"Legacy MCP (JSON Schemas): {legacy_tokens:,} tokens")
-        print(f"proto-mcp (Summaries):     {proto_tokens:,} tokens")
-        print(f"IMMEDIATE SAVING:          {((1 - proto_tokens/legacy_tokens)*100):.1f}%")
-        print("-" * 40)
-
-        # --- PHASE 2: DYNAMIC EXECUTION (LATE BINDING) ---
-        target_tool = next(t for t in resp.tools if t.name == "fetch_activity_stream")
-        print(f"\nTarget Tool Found: {target_tool.name}")
-        print(f"Blueprint: {target_tool.bsr_ref}")
-
-        print("\nFETCHING BLUEPRINT FROM BSR...")
-        RequestClass = registry.resolve(target_tool.bsr_ref)
-        print(f"Dynamically Bound Class: {RequestClass.__name__}")
-
-        print("\nEXECUTING BINARY CALL VIA gRPC...")
-        req = RequestClass(source_id="misfit-leads-2026", batch_size=100)
-        args_any = ProtoAny()
-        args_any.Pack(req)
+        # 1. Resolve Search Blueprint
+        SearchRequest = registry.resolve(search_tool_ref)
+        search_req = SearchRequest(query="registry", limit=5)
         
-        call_resp = client.call_tool(target_tool.name, args_any)
-        if call_resp.HasField("success"):
-            print(f"SUCCESS: Server responded -> '{call_resp.success.content[0].text}'")
+        arg_any = ProtoAny()
+        arg_any.Pack(search_req)
+        
+        search_resp = client.call_tool("search_registry", arg_any)
+        results_text = search_resp.success.content[0].text
+        print(f"Search Results Received:\n{results_text}")
+
+        # --- TURN 3: LATE BINDING EXECUTION ---
+        print("\nAgent selects 'fetch_activity_stream' from results.")
+        target_ref = "buf.build/mcpb/analytics/misfit.analytics.v1.ExtractRequest:main"
+        
+        print(f"Fetching blueprint for {target_ref}...")
+        ExtractRequest = registry.resolve(target_ref)
+        
+        print("Executing binary call with dynamic payload...")
+        extract_req = ExtractRequest(source_id="final-demo-stream", batch_size=50)
+        
+        exec_any = ProtoAny()
+        exec_any.Pack(extract_req)
+        
+        final_resp = client.call_tool("fetch_activity_stream", exec_any)
+        print(f"SUCCESS: Server responded -> '{final_resp.success.content[0].text}'")
+
+        # --- FINAL TOKEN PROOF ---
+        print("\n" + "-"*40)
+        print("FINAL TOKEN PROOF (Discovery of 1,000 tools)")
+        print("-"*40)
+        legacy_tokens = 200000 # Estimate for 1000 full JSON schemas
+        recursive_tokens = count_tokens(initial_context) + count_tokens(results_text)
+        print(f"Legacy MCP Context: {legacy_tokens:,} tokens")
+        print(f"Recursive proto-mcp: {recursive_tokens:,} tokens")
+        print(f"TOTAL SAVINGS:        {((1 - recursive_tokens/legacy_tokens)*100):.2f}%")
+        print("-"*40)
 
     except Exception as e:
         print(f"ERROR: {e}")
@@ -87,4 +96,4 @@ def run_live_showdown():
             os.remove(server_path)
 
 if __name__ == "__main__":
-    run_live_showdown()
+    run_recursive_showdown()

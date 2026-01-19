@@ -9,6 +9,7 @@ import (
 
 	"github.com/misfitdev/proto-mcp/go/mcp"
 	grpc_pkg "github.com/misfitdev/proto-mcp/go/pkg/grpc"
+	"github.com/misfitdev/proto-mcp/go/pkg/bsr"
 	"github.com/misfitdev/proto-mcp/go/pkg/registry"
 	"google.golang.org/grpc"
 )
@@ -18,8 +19,10 @@ func main() {
 	mode := flag.String("mode", "proto", "Protocol mode (explicit, search, or proto)")
 	flag.Parse()
 
-	reg := registry.NewUnifiedRegistry()
+	bsrClient := bsr.NewClient()
+	reg := registry.NewUnifiedRegistry(bsrClient)
 	reg.PopulateETLTools()
+	reg.PopulateDiscoveryTools()
 
 	fmt.Fprintf(os.Stderr, "Starting Showdown Server [Mode: %s, Transport: %s]\n", *mode, *transport)
 

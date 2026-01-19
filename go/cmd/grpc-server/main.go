@@ -7,6 +7,7 @@ import (
 
 	"github.com/misfitdev/proto-mcp/go/mcp"
 	grpc_pkg "github.com/misfitdev/proto-mcp/go/pkg/grpc"
+	"github.com/misfitdev/proto-mcp/go/pkg/bsr"
 	"github.com/misfitdev/proto-mcp/go/pkg/registry"
 	"google.golang.org/grpc"
 )
@@ -17,7 +18,8 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	s := grpc.NewServer()
-	reg := registry.NewUnifiedRegistry()
+	bsrClient := bsr.NewClient()
+	reg := registry.NewUnifiedRegistry(bsrClient)
 	reg.GenerateMockCatalog()
 	mcp.RegisterMCPServiceServer(s, grpc_pkg.NewServer(reg))
 	fmt.Println("gRPC server listening on :50051")
