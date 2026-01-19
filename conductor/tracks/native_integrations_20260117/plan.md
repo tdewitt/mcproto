@@ -1,7 +1,7 @@
 # Plan: Native Integrations
 
 ## Phase 1: Discovery & Audit
-- [ ] Task: Create a "Inspector" script to query existing MCP servers for tool schemas
+- [x] Task: Create a "Inspector" script to query existing MCP servers for tool schemas 1727cc0
 - [ ] Task: Create a "Data Auditor" script to catalog actual types in your Notion, Linear, and GitHub workspaces
 - [ ] Task: Generate Audit Reports for all three services
 - [ ] Task: Conductor - User Manual Verification 'Phase 1' (Protocol in workflow.md)
