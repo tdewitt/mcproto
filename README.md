@@ -1,42 +1,38 @@
 # MC Proto
-> **The Global Utility Belt for AI.** 99% Token reduction. Zero-config interop. Late-binding magic.
+> **High-efficiency AI tool orchestration.** 99% Token reduction. Zero-config interop. Late-binding schema resolution.
 
 ![MC Proto Hero](./docs/images/mc-proto-hero.png)
 
-## The Beat
-Standard MCP (Model Context Protocol) is hitting a "Context Wall." As agents scale to hundreds of enterprise tools, the overhead of technical JSON schemas consumes the AI's brain space, drives up costs, and slows down decision-making.
+## Motivation
+The standard Model Context Protocol (MCP) relies on JSON-RPC, which introduces significant overhead as agent environments scale. In enterprise settings with hundreds of tools, technical JSON schemas consume the majority of the AI's context window, increasing inference costs and reducing the available space for reasoning and task data.
 
-**MC Proto** (aka `proto-mcp`) is the binary upgrade. Built on **Protocol Buffers** and the **Buf Schema Registry (BSR)**, it decouples tool identity from implementation, allowing agents to discover and execute any API on the planet with native efficiency.
+**MC Proto** (aka `proto-mcp`) is a Protocol Buffer-based implementation of MCP. It replaces JSON-RPC with binary serialization and leverages the Buf Schema Registry (BSR) to decouple tool definitions from the transport layer.
 
 ## Key Features
-*   **99.9% Token Reduction:** Stop sending massive JSON schemas in every turn. MC Proto uses "Thin Discovery"—the LLM sees a name and description; the library handles the binary blueprint.
-*   **Late-Binding Interop:** No more hardcoded tools. Agents resolve blueprints from the BSR at runtime. Execute code you never even compiled.
-*   **Multi-Transport Engine:** Seamlessly switch between local Stdio pipes and remote gRPC sockets on a single stream.
-*   **Recursive Discovery:** Use the "Meta-Tool" to search the entire global Buf registry. Find the exact blueprint you need, when you need it.
-*   **Dual-Protocol Sniffer:** Drop-in replacement for existing MCP servers. Sniffs the wire to support legacy JSON-RPC and modern Protobuf simultaneously.
+*   **99.9% Token Reduction:** Implements "Thin Discovery" where the LLM only receives tool names and descriptions. Technical schemas are resolved out-of-band by the client library using BSR references.
+*   **Late-Binding Schema Resolution:** Tool blueprints are fetched from the BSR at runtime. This allows agents to execute tools without requiring the corresponding code to be compiled into the client or server at build-time.
+*   **Multi-Transport Engine:** A unified implementation that supports both local Stdio pipes (length-delimited binary framing) and remote gRPC sockets.
+*   **Recursive Discovery:** Includes a discovery meta-tool that performs live global searches of the Buf Schema Registry to find and load new tool blueprints on-demand.
+*   **Dual-Protocol Sniffer:** A non-destructive sniffer that detects the protocol format (JSON vs. Protobuf) based on the initial bytes of the stream, allowing for backward compatibility with standard MCP clients.
 
-## The Proof
-In our **"1,000 Tool Challenge"** benchmark:
-*   **Legacy MCP:** ~200,000 tokens (Context window exhausted).
-*   **MC Proto Search:** **453 tokens** (99.77% savings).
-*   **Latency:** Protobuf serialization is **5x faster** than JSON.
+## Performance Metrics
+In a benchmark of 1,000 tools:
+*   **Standard MCP:** ~200,000 tokens (Exceeds most context windows).
+*   **MC Proto (Search-based):** **453 tokens** (99.77% reduction).
+*   **Serialization Latency:** Protobuf serialization performed **~5x faster** than JSON encoding in Go and Python environments.
 
-## Quick Start
+## Setup and Execution
 
-### 1. Setup the environment
+### 1. Environment Configuration
 ```bash
-# Clone and enter
-git clone https://github.com/misfitdev/proto-mcp
-cd proto-mcp
-
-# Install dependencies (Proto toolchain required)
+# Install dependencies via the Proto toolchain
 proto use
 source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 2. Run the Boss Demo
-Witness the recursive discovery and late-binding call in action:
+### 2. Run the Reference Demo
+The following script demonstrates recursive discovery and a late-binding gRPC call:
 ```bash
 export BUF_TOKEN=<your_token>
 export PYTHONPATH=$PYTHONPATH:$(pwd)/python
@@ -44,11 +40,11 @@ python3 scripts/final_showdown.py
 ```
 
 ## Architecture
-MC Proto treats the **Buf Schema Registry** as the "DNS for AI." 
-1. **Server** advertises a `bsr_ref`.
-2. **Client** (Orchestrator) fetches the `FileDescriptorSet` from BSR.
-3. **LLM** receives a semantic summary.
-4. **Binary Call** is executed with strictly enforced types.
+MC Proto utilizes the **Buf Schema Registry** as a runtime blueprint provider:
+1. **Server** advertises a `bsr_ref` pointer.
+2. **Client** library fetches the `FileDescriptorSet` from the BSR.
+3. **LLM** operates on a semantic summary of the tool.
+4. **Binary Execution** is performed using dynamic message reflection (`dynamicpb` in Go, `DescriptorPool` in Python).
 
 ---
-*Created during a high-speed engineering spike to redefine the limits of AI Agent orchestration.*
+*Developed as a technical spike to verify the viability of binary-first AI orchestration.*
