@@ -24,9 +24,9 @@ def run_boss_demo():
     print("="*65 + "\n")
 
     # 1. Start Server
-    print("Building and starting Go gRPC server...")
-    subprocess.run(["go", "build", "-o", "grpc-server", "./cmd/grpc-server/main.go"], cwd="go", check=True)
-    server_path = os.path.join(os.getcwd(), "go", "grpc-server")
+    print("Building and starting Go mcproto server...")
+    subprocess.run(["go", "build", "-o", "mcproto", "./cmd/mcproto/main.go"], cwd="go", check=True)
+    server_path = os.path.join(os.getcwd(), "go", "mcproto")
     server_process = subprocess.Popen([server_path], stdout=subprocess.DEVNULL, stderr=sys.stderr)
     time.sleep(2)
 

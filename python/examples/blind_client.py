@@ -19,16 +19,16 @@ def run_blind_demo():
     print("="*65 + "\n")
 
     # 1. Compile Go Dynamic Server
-    print("Building Go dynamic-server...")
-    subprocess.run(["go", "build", "-o", "dynamic-server", "./cmd/dynamic-server/main.go"], cwd="go", check=True)
-    server_path = os.path.join(os.getcwd(), "go", "dynamic-server")
+    print("Building Go mcproto server...")
+    subprocess.run(["go", "build", "-o", "mcproto", "./cmd/mcproto/main.go"], cwd="go", check=True)
+    server_path = os.path.join(os.getcwd(), "go", "mcproto")
 
     # 2. Setup Client
     bsr = BSRClient()
     registry = Registry(bsr)
 
     process = subprocess.Popen(
-        [server_path],
+        [server_path, "--transport", "stdio"],
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=sys.stderr,

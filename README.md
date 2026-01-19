@@ -32,19 +32,19 @@ pip install -r requirements.txt
 ```
 
 ### 2. Run the Reference Demo
-The following script demonstrates recursive discovery and a late-binding gRPC call:
+The following script demonstrates recursive discovery and a late-binding gRPC call against the consolidated Go server:
 ```bash
 export BUF_TOKEN=<your_token>
 export PYTHONPATH=$PYTHONPATH:$(pwd)/python
-python3 scripts/final_showdown.py
+python3 python/examples/boss_demo.py
 ```
 
 ## Architecture
 MC Proto utilizes the **Buf Schema Registry** as a runtime blueprint provider:
-1. **Server** advertises a `bsr_ref` pointer.
-2. **Client** library fetches the `FileDescriptorSet` from the BSR.
+1. **Server** (`go/cmd/mcproto`) advertises a \`bsr_ref\` pointer.
+2. **Client** library (\`python/mcp\`) fetches the \`FileDescriptorSet\` from the BSR.
 3. **LLM** operates on a semantic summary of the tool.
-4. **Binary Execution** is performed using dynamic message reflection (`dynamicpb` in Go, `DescriptorPool` in Python).
+4. **Binary Execution** is performed using dynamic message reflection (\`dynamicpb\` in Go, \`DescriptorPool\` in Python).
 
 ---
 *Developed as a technical spike to verify the viability of binary-first AI orchestration.*

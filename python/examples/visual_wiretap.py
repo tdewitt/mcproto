@@ -23,13 +23,13 @@ def run_visual_wiretap():
     print("="*65 + "\n")
 
     # 1. Compile
-    subprocess.run(["go", "build", "-o", "echo-server", "./cmd/echo-server/main.go"], cwd="go", check=True)
-    server_path = os.path.join(os.getcwd(), "go", "echo-server")
+    subprocess.run(["go", "build", "-o", "mcproto", "./cmd/mcproto/main.go"], cwd="go", check=True)
+    server_path = os.path.join(os.getcwd(), "go", "mcproto")
 
     def test_protocol(name, payload_gen_func, is_binary=False):
         print(f"Testing Protocol: {name}")
         process = subprocess.Popen(
-            [server_path],
+            [server_path, "--transport", "stdio"],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
