@@ -3,8 +3,12 @@ from typing import Optional, Dict
 from . import mcp_pb2, mcp_pb2_grpc
 
 class GRPCClient:
-    def __init__(self, target: str = "localhost:50051"):
-        self.channel = grpc.insecure_channel(target)
+    def __init__(self, target: str = "localhost:50051", use_secure: bool = False):
+        if use_secure:
+            credentials = grpc.ssl_channel_credentials()
+            self.channel = grpc.secure_channel(target, credentials)
+        else:
+            self.channel = grpc.insecure_channel(target)
         self.stub = mcp_pb2_grpc.MCPServiceStub(self.channel)
 
     def initialize(self, protocol_version: str = "1.0.0") -> mcp_pb2.InitializeResponse:

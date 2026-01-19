@@ -2,6 +2,7 @@ package stdio
 
 import (
 	"encoding/binary"
+	"fmt"
 	"io"
 
 	"github.com/misfitdev/proto-mcp/go/mcp"
@@ -16,6 +17,8 @@ func NewReader(r io.Reader) *Reader {
 	return &Reader{r: r}
 }
 
+const MaxMessageSize = 32 * 1024 * 1024 // 32MB
+
 func (r *Reader) ReadMessage() (*mcp.MCPMessage, error) {
 	// Read length prefix (4 bytes)
 	lenBuf := make([]byte, 4)
@@ -23,6 +26,11 @@ func (r *Reader) ReadMessage() (*mcp.MCPMessage, error) {
 		return nil, err
 	}
 	length := binary.BigEndian.Uint32(lenBuf)
+
+	// Security: Limit message size to prevent OOM
+	if length > MaxMessageSize {
+		return nil, fmt.Errorf("message size %d exceeds limit of %d bytes", length, MaxMessageSize)
+	}
 
 	// Read message body
 	msgBuf := make([]byte, length)

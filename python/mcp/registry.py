@@ -4,6 +4,8 @@ from google.protobuf.message_factory import GetMessageClass
 from google.protobuf.descriptor_pb2 import FileDescriptorSet
 from .bsr import BSRClient, BSRRef
 
+MAX_CACHE_SIZE = 100
+
 class Registry:
     def __init__(self, client: BSRClient):
         self.client = client
@@ -23,6 +25,10 @@ class Registry:
         # 2. Fetch from BSR if not in cache
         repo_id = f"{ref.owner}/{ref.repository}@{ref.version}"
         if repo_id not in self.cache:
+            # Security: Bounded cache to prevent memory exhaustion
+            if len(self.cache) >= MAX_CACHE_SIZE:
+                self.cache.clear() # Basic eviction
+
             fds = self.client.fetch_descriptor_set(ref)
             self.cache[repo_id] = fds
         else:

@@ -2,6 +2,8 @@ import struct
 from typing import BinaryIO, Optional
 from . import mcp_pb2
 
+MAX_MESSAGE_SIZE = 32 * 1024 * 1024  # 32MB
+
 class StdioReader:
     def __init__(self, reader: BinaryIO):
         self.reader = reader
@@ -16,6 +18,10 @@ class StdioReader:
         
         length = struct.unpack(">I", len_buf)[0]
         
+        # Security: Limit message size to prevent OOM
+        if length > MAX_MESSAGE_SIZE:
+            raise ValueError(f"Message size {length} exceeds limit of {MAX_MESSAGE_SIZE} bytes")
+
         # Read message body
         msg_buf = self.reader.read(length)
         if len(msg_buf) < length:

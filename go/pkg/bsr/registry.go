@@ -31,6 +31,8 @@ func NewRegistry(client *Client) *Registry {
 	}
 }
 
+const MaxCacheSize = 100
+
 // Resolve fetches and registers the schema for a BSR reference.
 func (r *Registry) Resolve(ctx context.Context, refStr string) (protoreflect.MessageType, error) {
 	ref, err := ParseRef(refStr)
@@ -50,6 +52,13 @@ func (r *Registry) Resolve(ctx context.Context, refStr string) (protoreflect.Mes
 	repoID := fmt.Sprintf("%s/%s@%s", ref.Owner, ref.Repository, ref.Version)
 	fds, ok := r.cache[repoID]
 	if !ok {
+		// Security: Bounded cache to prevent memory exhaustion
+		if len(r.cache) >= MaxCacheSize {
+			// Basic eviction: clear cache if full
+			// In production, use a proper LRU
+			r.cache = make(map[string]*descriptorpb.FileDescriptorSet)
+		}
+
 		fds, err = r.client.FetchDescriptorSet(ctx, ref)
 		if err != nil {
 			return nil, err
