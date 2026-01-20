@@ -16,6 +16,6 @@
 - [ ] Task: Conductor - User Manual Verification 'Phase 3' (Protocol in workflow.md)
 
 ## Phase 4: Verification
-- [~] Task: Create validation scripts to run RPCs against real data
+- [x] Task: Create validation scripts to run RPCs against real data 591b9dc
 - [ ] Task: Generate final success report
 - [ ] Task: Conductor - User Manual Verification 'Phase 4' (Protocol in workflow.md)
