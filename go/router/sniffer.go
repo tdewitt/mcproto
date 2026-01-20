@@ -24,15 +24,20 @@ func NewSniffer(r io.Reader) *Sniffer {
 }
 
 func (s *Sniffer) Detect() (Protocol, error) {
-	peek, err := s.br.Peek(1)
+	peek, err := s.br.Peek(32)
 	if err != nil {
-		if err == io.EOF {
+		if err == io.EOF && len(peek) == 0 {
 			return ProtocolUnknown, nil
 		}
-		return ProtocolUnknown, err
+		if len(peek) == 0 {
+			return ProtocolUnknown, err
+		}
 	}
 
-	firstByte := peek[0]
+	firstByte, found := firstNonWhitespace(peek)
+	if !found {
+		return ProtocolJSON, nil
+	}
 	if firstByte == '{' {
 		return ProtocolJSON, nil
 	}
@@ -45,4 +50,17 @@ func (s *Sniffer) Detect() (Protocol, error) {
 
 func (s *Sniffer) Read(p []byte) (n int, err error) {
 	return s.br.Read(p)
+}
+
+func firstNonWhitespace(data []byte) (byte, bool) {
+	for _, b := range data {
+		if !isWhitespace(b) {
+			return b, true
+		}
+	}
+	return 0, false
+}
+
+func isWhitespace(b byte) bool {
+	return b == ' ' || b == '\n' || b == '\r' || b == '\t'
 }

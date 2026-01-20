@@ -18,6 +18,11 @@ func TestSniffer(t *testing.T) {
 			expected: ProtocolJSON,
 		},
 		{
+			name:     "JSON-RPC (Leading Whitespace)",
+			input:    []byte(" \n\t{\"jsonrpc\": \"2.0\"}"),
+			expected: ProtocolJSON,
+		},
+		{
 			name:     "Binary (Small Length Prefix)",
 			input:    []byte{0x00, 0x00, 0x00, 0x01, 0x0A},
 			expected: ProtocolBinary,
