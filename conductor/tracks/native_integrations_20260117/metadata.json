@@ -4,5 +4,5 @@
   "status": "new",
   "created_at": "2026-01-17T17:00:00Z",
   "updated_at": "2026-01-17T17:00:00Z",
-  "description": "Native Proto-MCP Integrations for Notion, Linear, and GitHub"
+  "description": "Native Proto-MCP Integration for GitHub"
 }
