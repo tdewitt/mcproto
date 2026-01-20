@@ -1,0 +1,10 @@
+{
+  "mcproto": {
+    "command": "./go/mcproto",
+    "args": ["--transport", "stdio"],
+    "env": {
+      "BUF_TOKEN": "${BUF_TOKEN}",
+      "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
+    }
+  }
+}

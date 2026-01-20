@@ -108,6 +108,28 @@ func (r *UnifiedRegistry) Call(ctx context.Context, name string, args []byte) (*
 	return entry.Handler(ctx, args)
 }
 
+func (r *UnifiedRegistry) CallByBsrRef(ctx context.Context, bsrRef string, args []byte) (*mcp.ToolResult, error) {
+	if bsrRef == "" {
+		return nil, fmt.Errorf("bsr_ref is required")
+	}
+	for _, entry := range r.tools {
+		if toolBsrRef(entry.Tool) == bsrRef {
+			return entry.Handler(ctx, args)
+		}
+	}
+	return nil, fmt.Errorf("no tool found for bsr_ref %q", bsrRef)
+}
+
+func toolBsrRef(tool *mcp.Tool) string {
+	if tool == nil {
+		return ""
+	}
+	if ref, ok := tool.SchemaSource.(*mcp.Tool_BsrRef); ok {
+		return ref.BsrRef
+	}
+	return ""
+}
+
 func cloneToolWithName(tool *mcp.Tool, name string) *mcp.Tool {
 	if tool == nil {
 		return nil

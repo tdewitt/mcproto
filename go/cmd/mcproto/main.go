@@ -55,9 +55,10 @@ func main() {
 		// Stdio Transport with Dual-Protocol Router
 		rw := &stdioReadWriter{reader: os.Stdin, writer: os.Stdout}
 		pr := router.NewProtocolRouter(rw)
-		
+
 		// Support both Legacy JSON and high-efficiency Binary on the same pipe
-		pr.Register(router.ProtocolJSON, &router.JSONHandler{})
+		bsrRegistry := bsr.NewRegistry(bsrClient)
+		pr.Register(router.ProtocolJSON, router.NewJSONHandler(reg, bsrRegistry))
 		pr.Register(router.ProtocolBinary, router.NewBinaryHandler(reg))
 
 		if err := pr.Route(); err != nil {
