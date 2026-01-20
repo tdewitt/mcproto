@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
+
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CLAUDE_BIN="${CLAUDE_BIN:-/Users/tucker/.claude/local/claude}"
 MODEL="${CLAUDE_MODEL:-}"
 CONFIG="$(mktemp)"
+ATTEMPTS="${CLAUDE_ATTEMPTS:-5}"
+TIMEOUT="${CLAUDE_TIMEOUT:-60}"
+DELAY="${CLAUDE_DELAY:-1.5}"
 
 cleanup() {
   rm -f "$CONFIG"
@@ -31,15 +35,13 @@ cat > "$CONFIG" <<EOF
 }
 EOF
 
-CLAUDE_ARGS=(--print --strict-mcp-config --mcp-config "$CONFIG" --permission-mode bypassPermissions)
-if [[ -n "$MODEL" ]]; then
-  CLAUDE_ARGS+=(--model "$MODEL")
-fi
-if [[ -n "${CLAUDE_DEBUG:-}" ]]; then
-  CLAUDE_ARGS+=(--debug "${CLAUDE_DEBUG}")
-fi
-if [[ -n "${CLAUDE_VERBOSE:-}" ]]; then
-  CLAUDE_ARGS+=(--verbose)
-fi
-
-"$CLAUDE_BIN" "${CLAUDE_ARGS[@]}" "$PROMPT"
+python3 "$ROOT/scripts/claude_discovery_loop.py" \
+  --claude-bin "$CLAUDE_BIN" \
+  --config "$CONFIG" \
+  --prompt "$PROMPT" \
+  --model "$MODEL" \
+  --debug "${CLAUDE_DEBUG:-}" \
+  ${CLAUDE_VERBOSE:+--verbose} \
+  --attempts "$ATTEMPTS" \
+  --timeout "$TIMEOUT" \
+  --delay "$DELAY"
