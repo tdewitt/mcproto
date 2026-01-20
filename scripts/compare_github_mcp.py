@@ -12,14 +12,18 @@ from __future__ import annotations
 import json
 import os
 import re
-import shutil
 import subprocess
 import sys
 import tempfile
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional, Tuple, List, Any
+
+try:
+    import httpx  # type: ignore
+except Exception:
+    httpx = None  # Will raise later if missing
 
 
 # ----- Utility dataclasses ----------------------------------------------------
@@ -32,11 +36,12 @@ class RunResult:
     duration_seconds: float
     token_count_prompt: int
     token_count_output: int
+    token_count_tools_list: int
     issue_urls: Tuple[str, ...]
 
     @property
     def token_count_total(self) -> int:
-        return self.token_count_prompt + self.token_count_output
+        return self.token_count_prompt + self.token_count_output + self.token_count_tools_list
 
 
 # ----- Token counting --------------------------------------------------------
@@ -132,6 +137,7 @@ def run_claude(
     config_path: Path,
     prompt: str,
     model: Optional[str],
+    log_dir: Path,
 ) -> RunResult:
     """
     Run Claude CLI once with the given MCP config and prompt.
@@ -156,6 +162,10 @@ def run_claude(
     end = time.time()
     duration = round(end - start, 2)
 
+    # Save stdout/stderr for inspection.
+    (log_dir / f"{label}.stdout.txt").write_text(proc.stdout)
+    (log_dir / f"{label}.stderr.txt").write_text(proc.stderr)
+
     if proc.returncode != 0:
         raise RuntimeError(
             f"{label} run failed (exit {proc.returncode}):\nSTDOUT:\n{proc.stdout}\nSTDERR:\n{proc.stderr}"
@@ -164,7 +174,18 @@ def run_claude(
     stdout = proc.stdout
     token_prompt = count_tokens(prompt)
     token_output = count_tokens(stdout)
-    issues = tuple(re.findall(r"https?://github.com/[^\s)]+/issues/\\d+", stdout))
+    issues = tuple(re.findall(r"https?://github.com/[^\s)]+/issues/\d+", stdout))
+
+    # Attempt to capture tools/list output if present in verbose logs.
+    # Claude CLI does not expose a clean hook, so we rely on a best-effort JSON scrape.
+    token_tools_list = 0
+    tools_json_matches: List[str] = re.findall(r'"tools":\\s*\\[(.*?)\\]\\s*}', proc.stdout, re.DOTALL)
+    if tools_json_matches:
+        try:
+            snippet = "{" + '"tools":[' + tools_json_matches[0] + "]}"
+            token_tools_list = count_tokens(snippet)
+        except Exception:
+            token_tools_list = 0
 
     return RunResult(
         label=label,
@@ -173,8 +194,71 @@ def run_claude(
         duration_seconds=duration,
         token_count_prompt=token_prompt,
         token_count_output=token_output,
+        token_count_tools_list=token_tools_list,
         issue_urls=issues,
     )
+
+
+# ----- MCP tools/list helpers ------------------------------------------------
+
+def tools_list_http(url: str, auth_header: str) -> Dict[str, Any]:
+    """
+    Call tools/list over HTTP MCP (hosted GitHub MCP). This is a minimal client
+    that sends initialize + tools/list.
+    """
+    if httpx is None:
+        raise RuntimeError("httpx is required for HTTP tools/list; install in venv.")
+    headers = {"Content-Type": "application/json"}
+    if auth_header:
+        headers["Authorization"] = auth_header
+    init_req = {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "initialize",
+        "params": {},
+    }
+    list_req = {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "method": "tools/list",
+        "params": {},
+    }
+    with httpx.Client(timeout=30) as client:
+        r1 = client.post(url, json=init_req, headers=headers)
+        r1.raise_for_status()
+        r2 = client.post(url, json=list_req, headers=headers)
+        if r2.status_code != 200:
+            raise RuntimeError(f"tools/list HTTP failed: {r2.status_code} {r2.text[:200]}")
+        text = r2.text
+        # Handle SSE-style response (event: message\\ndata: {...}\\n\\n)
+        data_lines = [line.strip()[5:].strip() for line in text.splitlines() if line.startswith("data:")]
+        payload = data_lines[-1] if data_lines else text
+        try:
+            return json.loads(payload)
+        except Exception as exc:
+            raise RuntimeError(f"tools/list HTTP invalid JSON payload: {payload[:200]}") from exc
+
+
+def tools_list_stdio(command: str, args: List[str], env: Dict[str, str]) -> Dict[str, Any]:
+    """
+    Call tools/list over stdio MCP for our proto server.
+    """
+    init_req = json.dumps({"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}})
+    list_req = json.dumps({"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}})
+    payload = f"{init_req}\n{list_req}\n"
+    proc = subprocess.run(
+        [command] + args,
+        input=payload,
+        env={**os.environ, **env},
+        capture_output=True,
+        text=True,
+    )
+    if proc.returncode != 0:
+        raise RuntimeError(f"tools/list stdio failed: {proc.stderr}")
+    # Grab the second response (tools/list)
+    lines = [l for l in proc.stdout.splitlines() if l.strip()]
+    resp = json.loads(lines[-1])
+    return resp
 
 
 # ----- Main orchestration ----------------------------------------------------
@@ -185,7 +269,11 @@ def main() -> int:
     model = os.environ.get("CLAUDE_MODEL", "")
     prompt = (
         "You have MCP tools available. Create an issue in the GitHub repo tdewitt/mcproto "
-        "with a short unique token in the title and body. Return the issue URL."
+        "with a short unique token in the title and body. Return the issue URL. "
+        "If a GitHub issue tool exists (e.g., issue_write), call it with method=create, "
+        "owner=tdewitt, repo=mcproto, and a unique title/body token. "
+        "If only meta tools (search_registry/resolve_schema/call_tool) exist, use them to "
+        "discover the GitHub CreateIssue schema via BSR, then call it."
     )
 
     # Load secrets from .env if present.
@@ -196,55 +284,75 @@ def main() -> int:
     if not gh_pat:
         raise SystemExit("GITHUB_PERSONAL_ACCESS_TOKEN is required (set in .env).")
 
-    with tempfile.TemporaryDirectory() as tmp:
-        tmpdir = Path(tmp)
+    tmpdir = Path(tempfile.mkdtemp(prefix="compare_mcp_"))
 
-        # Build configs for both scenarios.
-        official_cfg = build_official_config(tmpdir, gh_pat)
-        proto_cfg = build_proto_config(tmpdir, repo_root, buf_token, gh_pat)
+    # Build configs for both scenarios.
+    official_cfg = build_official_config(tmpdir, gh_pat)
+    proto_cfg = build_proto_config(tmpdir, repo_root, buf_token, gh_pat)
 
-        # Run official HTTP GitHub MCP.
-        official = run_claude(
-            label="official_github_mcp",
-            claude_bin=claude_bin,
-            config_path=official_cfg,
-            prompt=prompt,
-            model=model or None,
-        )
+    # Preload tokens: tools/list
+    official_tools = tools_list_http(
+        url="https://api.githubcopilot.com/mcp/",
+        auth_header=f"Bearer {gh_pat}",
+    )
+    proto_tools = tools_list_stdio(
+        command=str((tmpdir / "mcproto")),
+        args=["--transport", "stdio"],
+        env={
+            "BUF_TOKEN": buf_token,
+            "GITHUB_PERSONAL_ACCESS_TOKEN": gh_pat,
+        },
+    )
 
-        # Run proto MCP (BSR discovery).
-        proto = run_claude(
-            label="proto_mcp",
-            claude_bin=claude_bin,
-            config_path=proto_cfg,
-            prompt=prompt,
-            model=model or None,
-        )
+    # Run official HTTP GitHub MCP.
+    official = run_claude(
+        label="official_github_mcp",
+        claude_bin=claude_bin,
+        config_path=official_cfg,
+        prompt=prompt,
+        model=model or None,
+        log_dir=tmpdir,
+    )
+    official.token_count_tools_list = count_tokens(json.dumps(official_tools))
 
-        # Build comparison summary.
-        summary = {
-            "prompt": prompt,
-            "runs": [
-                {
-                    "label": official.label,
-                    "duration_seconds": official.duration_seconds,
-                    "token_prompt": official.token_count_prompt,
-                    "token_output": official.token_count_output,
-                    "token_total": official.token_count_total,
-                    "issue_urls": official.issue_urls,
-                },
-                {
-                    "label": proto.label,
-                    "duration_seconds": proto.duration_seconds,
-                    "token_prompt": proto.token_count_prompt,
-                    "token_output": proto.token_count_output,
-                    "token_total": proto.token_count_total,
-                    "issue_urls": proto.issue_urls,
-                },
-            ],
-        }
+    # Run proto MCP (BSR discovery).
+    proto = run_claude(
+        label="proto_mcp",
+        claude_bin=claude_bin,
+        config_path=proto_cfg,
+        prompt=prompt,
+        model=model or None,
+        log_dir=tmpdir,
+    )
+    proto.token_count_tools_list = count_tokens(json.dumps(proto_tools))
 
-        print(json.dumps(summary, indent=2))
+    # Build comparison summary.
+    summary = {
+        "prompt": prompt,
+        "runs": [
+            {
+                "label": official.label,
+                "duration_seconds": official.duration_seconds,
+                "token_prompt": official.token_count_prompt,
+                "token_output": official.token_count_output,
+                "token_tools_list": official.token_count_tools_list,
+                "token_total": official.token_count_total,
+                "issue_urls": official.issue_urls,
+            },
+            {
+                "label": proto.label,
+                "duration_seconds": proto.duration_seconds,
+                "token_prompt": proto.token_count_prompt,
+                "token_output": proto.token_count_output,
+                "token_tools_list": proto.token_count_tools_list,
+                "token_total": proto.token_count_total,
+                "issue_urls": proto.issue_urls,
+            },
+        ],
+    }
+
+    print(json.dumps(summary, indent=2))
+    print(f"Logs: {tmpdir}")
 
     return 0
 
