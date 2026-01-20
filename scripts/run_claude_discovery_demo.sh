@@ -3,8 +3,13 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CLAUDE_BIN="${CLAUDE_BIN:-/Users/tucker/.claude/local/claude}"
-CONFIG="$ROOT/scripts/claude_mcp.json"
-MODEL="${CLAUDE_MODEL:-haiku}"
+MODEL="${CLAUDE_MODEL:-}"
+CONFIG="$(mktemp)"
+
+cleanup() {
+  rm -f "$CONFIG"
+}
+trap cleanup EXIT
 
 (
   cd "$ROOT/go"
@@ -13,11 +18,28 @@ MODEL="${CLAUDE_MODEL:-haiku}"
 
 PROMPT=${1:-"You have access to MCP tools search_registry, resolve_schema, and call_tool. Find a tool in the mcpb registry that can list data sources for analytics, resolve its schema, then call it. Use call_tool with the bsr_ref and tool_name if available. If arguments are required, supply minimal valid values. Return only the final tool output."}
 
-"$CLAUDE_BIN" \
-  --print \
-  --model "$MODEL" \
-  --strict-mcp-config \
-  --mcp-config "$CONFIG" \
-  --tools "" \
-  --permission-mode dontAsk \
-  "$PROMPT"
+cat > "$CONFIG" <<EOF
+{
+  "mcproto": {
+    "command": "$ROOT/go/mcproto",
+    "args": ["--transport", "stdio"],
+    "env": {
+      "BUF_TOKEN": "${BUF_TOKEN}",
+      "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
+    }
+  }
+}
+EOF
+
+CLAUDE_ARGS=(--print --strict-mcp-config --mcp-config "$CONFIG" --permission-mode bypassPermissions)
+if [[ -n "$MODEL" ]]; then
+  CLAUDE_ARGS+=(--model "$MODEL")
+fi
+if [[ -n "${CLAUDE_DEBUG:-}" ]]; then
+  CLAUDE_ARGS+=(--debug "${CLAUDE_DEBUG}")
+fi
+if [[ -n "${CLAUDE_VERBOSE:-}" ]]; then
+  CLAUDE_ARGS+=(--verbose)
+fi
+
+"$CLAUDE_BIN" "${CLAUDE_ARGS[@]}" "$PROMPT"
