@@ -20,5 +20,6 @@
 - [x] Task: Align GitHub tool naming with official MCP (drop GetRepository, add snake_case aliases) 4ea45f2
 - [x] Task: Create on-demand discovery benchmark script (BSR + token savings) 5663e87
 - [x] Task: Publish proto modules to BSR under mcpb (public) fa35665
-- [ ] Task: Generate final success report
+- [~] Task: Generate final success report
+- [x] Task: Claude CLI discovery demo (mcpb-only search) ae0234e
 - [ ] Task: Conductor - User Manual Verification 'Phase 4' (Protocol in workflow.md)
