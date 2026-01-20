@@ -21,6 +21,10 @@
 # Go workspace file
 go.work
 
+# Local build artifacts
+/inspector
+/gen/
+
 ### Python ###
 # Byte-compiled / optimized / DLL files
 __pycache__/
