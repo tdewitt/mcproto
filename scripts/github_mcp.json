@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "github-official": {
+      "command": "../venv/bin/python",
+      "args": ["-m", "github_mcp_server"],
+      "env": {
+        "GITHUB_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}" 
+      }
+    }
+  }
+}
