@@ -1,0 +1,6 @@
+version: v1
+directories:
+  - analytics
+  - discovery
+  - github
+  - mcp

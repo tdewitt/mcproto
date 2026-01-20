@@ -10,9 +10,9 @@ import (
 )
 
 func TestBinaryHandler(t *testing.T) {
-	registry := registry.NewUnifiedRegistry()
+	registry := registry.NewUnifiedRegistry(nil)
 	handler := NewBinaryHandler(registry)
-	
+
 	msg := &mcp.MCPMessage{
 		Id: 1,
 		Payload: &mcp.MCPMessage_InitializeRequest{

@@ -1,0 +1,710 @@
+syntax = "proto3";
+
+package tucker.mcproto.github.v1;
+
+option go_package = "github.com/misfitdev/proto-mcp/go/pkg/github";
+
+// Service definition for GitHub MCP
+service GitHubService {
+  // Repository Operations
+  rpc CreateRepository(CreateRepositoryRequest) returns (CreateRepositoryResponse);
+  rpc SearchRepositories(SearchRepositoriesRequest) returns (SearchRepositoriesResponse);
+  rpc GetRepository(GetRepositoryRequest) returns (GetRepositoryResponse);
+  rpc ForkRepository(ForkRepositoryRequest) returns (ForkRepositoryResponse);
+  
+  // File Operations
+  rpc GetFileContents(GetFileContentsRequest) returns (GetFileContentsResponse);
+  rpc CreateOrUpdateFile(CreateOrUpdateFileRequest) returns (FileCommitResponse);
+  rpc PushFiles(PushFilesRequest) returns (PushFilesResponse);
+  
+  // Branch & Commit Operations
+  rpc CreateBranch(CreateBranchRequest) returns (CreateBranchResponse);
+  rpc ListCommits(ListCommitsRequest) returns (ListCommitsResponse);
+  
+  // Issue Operations
+  rpc CreateIssue(CreateIssueRequest) returns (CreateIssueResponse);
+  rpc ListIssues(ListIssuesRequest) returns (ListIssuesResponse);
+  rpc GetIssue(GetIssueRequest) returns (GetIssueResponse);
+  rpc UpdateIssue(UpdateIssueRequest) returns (UpdateIssueResponse);
+  rpc AddIssueComment(AddIssueCommentRequest) returns (AddIssueCommentResponse);
+  rpc SearchIssues(SearchIssuesRequest) returns (SearchIssuesResponse);
+  
+  // Pull Request Operations
+  rpc CreatePullRequest(CreatePullRequestRequest) returns (CreatePullRequestResponse);
+  rpc GetPullRequest(GetPullRequestRequest) returns (GetPullRequestResponse);
+  rpc ListPullRequests(ListPullRequestsRequest) returns (ListPullRequestsResponse);
+  rpc CreatePullRequestReview(CreatePullRequestReviewRequest) returns (CreatePullRequestReviewResponse);
+  rpc MergePullRequest(MergePullRequestRequest) returns (MergePullRequestResponse);
+  rpc GetPullRequestFiles(GetPullRequestFilesRequest) returns (GetPullRequestFilesResponse);
+  rpc GetPullRequestStatus(GetPullRequestStatusRequest) returns (GetPullRequestStatusResponse);
+  rpc UpdatePullRequestBranch(UpdatePullRequestBranchRequest) returns (UpdatePullRequestBranchResponse);
+  rpc GetPullRequestComments(GetPullRequestCommentsRequest) returns (GetPullRequestCommentsResponse);
+  rpc GetPullRequestReviews(GetPullRequestReviewsRequest) returns (GetPullRequestReviewsResponse);
+  
+  // Search & User Operations
+  rpc SearchCode(SearchCodeRequest) returns (SearchCodeResponse);
+  rpc SearchUsers(SearchUsersRequest) returns (SearchUsersResponse);
+}
+
+// --- Request/Response Messages ---
+
+message CreateRepositoryResponse {
+  Repository repository = 1;
+}
+
+message GetRepositoryResponse {
+  Repository repository = 1;
+}
+
+message ForkRepositoryResponse {
+  Repository repository = 1;
+}
+
+message CreateBranchResponse {
+  Reference reference = 1;
+}
+
+message CreateIssueResponse {
+  Issue issue = 1;
+}
+
+message GetIssueResponse {
+  Issue issue = 1;
+}
+
+message UpdateIssueResponse {
+  Issue issue = 1;
+}
+
+message AddIssueCommentResponse {
+  IssueComment comment = 1;
+}
+
+message CreatePullRequestResponse {
+  PullRequest pull_request = 1;
+}
+
+message GetPullRequestResponse {
+  PullRequest pull_request = 1;
+}
+
+message CreatePullRequestReviewResponse {
+  PullRequestReview review = 1;
+}
+
+message MergePullRequestResponse {
+  string sha = 1;
+  bool merged = 2;
+  string message = 3;
+}
+
+message GetPullRequestFilesResponse {
+  repeated FileChange files = 1;
+}
+
+message GetPullRequestStatusResponse {
+  string state = 1;
+  repeated Status status = 2;
+  int32 total_count = 3;
+}
+
+message UpdatePullRequestBranchResponse {
+  string message = 1;
+  string url = 2;
+}
+
+message GetPullRequestCommentsResponse {
+  repeated PullRequestComment comments = 1;
+}
+
+message GetPullRequestReviewsResponse {
+  repeated PullRequestReview reviews = 1;
+}
+
+message CreateRepositoryRequest {
+  string name = 1;
+  optional string description = 2;
+  optional bool private = 3;
+  optional bool auto_init = 4;
+}
+
+message SearchRepositoriesRequest {
+  string query = 1;
+  optional int32 page = 2;
+  optional int32 per_page = 3;
+}
+
+message SearchRepositoriesResponse {
+  int32 total_count = 1;
+  bool incomplete_results = 2;
+  repeated Repository repositories = 3;
+}
+
+message GetRepositoryRequest {
+  string owner = 1;
+  string repo = 2;
+}
+
+message ForkRepositoryRequest {
+  string owner = 1;
+  string repo = 2;
+  optional string organization = 3;
+}
+
+message GetFileContentsRequest {
+  string owner = 1;
+  string repo = 2;
+  string path = 3;
+  optional string branch = 4;
+}
+
+message GetFileContentsResponse {
+  string type = 1;
+  string encoding = 2;
+  int32 size = 3;
+  string name = 4;
+  string path = 5;
+  string content = 6;
+  string sha = 7;
+  string url = 8;
+  string git_url = 9;
+  string html_url = 10;
+  string download_url = 11;
+}
+
+message CreateOrUpdateFileRequest {
+  string owner = 1;
+  string repo = 2;
+  string path = 3;
+  string content = 4;
+  string message = 5;
+  string branch = 6;
+  optional string sha = 7;
+}
+
+message FileCommitResponse {
+  Content content = 1;
+  Commit commit = 2;
+}
+
+message PushFilesRequest {
+  string owner = 1;
+  string repo = 2;
+  string branch = 3;
+  repeated FileOperation files = 4;
+  string message = 5;
+}
+
+message FileOperation {
+  string path = 1;
+  string content = 2;
+}
+
+message PushFilesResponse {
+  string ref = 1;
+  string node_id = 2;
+  string url = 3;
+  Object object = 4;
+}
+
+message Object {
+  string sha = 1;
+  string type = 2;
+  string url = 3;
+}
+
+message CreateBranchRequest {
+  string owner = 1;
+  string repo = 2;
+  string branch = 3;
+  optional string from_branch = 4;
+}
+
+message ListCommitsRequest {
+  string owner = 1;
+  string repo = 2;
+  optional string sha = 3;
+  optional int32 page = 4;
+  optional int32 per_page = 5;
+}
+
+message ListCommitsResponse {
+  repeated Commit commits = 1;
+}
+
+message CreateIssueRequest {
+  string owner = 1;
+  string repo = 2;
+  string title = 3;
+  optional string body = 4;
+  repeated string assignees = 5;
+  optional int32 milestone = 6;
+  repeated string labels = 7;
+}
+
+message ListIssuesRequest {
+  string owner = 1;
+  string repo = 2;
+  optional int32 page = 3;
+  optional int32 per_page = 4;
+  optional string state = 5; 
+  optional string sort = 6;
+  optional string direction = 7;
+  optional string since = 8;
+  repeated string labels = 9;
+}
+
+message ListIssuesResponse {
+  repeated Issue issues = 1;
+}
+
+message GetIssueRequest {
+  string owner = 1;
+  string repo = 2;
+  int32 issue_number = 3;
+}
+
+message UpdateIssueRequest {
+  string owner = 1;
+  string repo = 2;
+  int32 issue_number = 3;
+  optional string title = 4;
+  optional string body = 5;
+  repeated string assignees = 6;
+  optional int32 milestone = 7;
+  repeated string labels = 8;
+  optional string state = 9;
+}
+
+message AddIssueCommentRequest {
+  string owner = 1;
+  string repo = 2;
+  int32 issue_number = 3;
+  string body = 4;
+}
+
+message SearchIssuesRequest {
+  string q = 1;
+  optional string order = 2;
+  optional int32 page = 3;
+  optional int32 per_page = 4;
+  optional string sort = 5;
+}
+
+message SearchIssuesResponse {
+  int32 total_count = 1;
+  bool incomplete_results = 2;
+  repeated Issue items = 3;
+}
+
+message CreatePullRequestRequest {
+  string owner = 1;
+  string repo = 2;
+  string title = 3;
+  optional string body = 4;
+  string head = 5;
+  string base = 6;
+  optional bool draft = 7;
+  optional bool maintainer_can_modify = 8;
+}
+
+message GetPullRequestRequest {
+  string owner = 1;
+  string repo = 2;
+  int32 pull_number = 3;
+}
+
+message ListPullRequestsRequest {
+  string owner = 1;
+  string repo = 2;
+  optional string state = 3;
+  optional string head = 4;
+  optional string base = 5;
+  optional string sort = 6;
+  optional string direction = 7;
+  optional int32 per_page = 8;
+  optional int32 page = 9;
+}
+
+message ListPullRequestsResponse {
+  repeated PullRequest pull_requests = 1;
+}
+
+message CreatePullRequestReviewRequest {
+  string owner = 1;
+  string repo = 2;
+  int32 pull_number = 3;
+  optional string commit_id = 4;
+  optional string body = 5;
+  string event = 6;
+  repeated ReviewComment comments = 7;
+}
+
+message ReviewComment {
+  // Using oneof to handle position OR line
+  oneof location {
+    int32 position = 1;
+    int32 line = 2;
+  }
+  string path = 3;
+  string body = 4;
+}
+
+message MergePullRequestRequest {
+  string owner = 1;
+  string repo = 2;
+  int32 pull_number = 3;
+  optional string commit_title = 4;
+  optional string commit_message = 5;
+  optional string merge_method = 6;
+}
+
+message GetPullRequestFilesRequest {
+  string owner = 1;
+  string repo = 2;
+  int32 pull_number = 3;
+}
+
+message GetPullRequestStatusRequest {
+  string owner = 1;
+  string repo = 2;
+  int32 pull_number = 3;
+}
+
+message UpdatePullRequestBranchRequest {
+  string owner = 1;
+  string repo = 2;
+  int32 pull_number = 3;
+  optional string expected_head_sha = 4;
+}
+
+message GetPullRequestCommentsRequest {
+  string owner = 1;
+  string repo = 2;
+  int32 pull_number = 3;
+}
+
+message GetPullRequestReviewsRequest {
+  string owner = 1;
+  string repo = 2;
+  int32 pull_number = 3;
+}
+
+message SearchCodeRequest {
+  string q = 1;
+  optional string order = 2;
+  optional int32 page = 3;
+  optional int32 per_page = 4;
+}
+
+message SearchCodeResponse {
+  int32 total_count = 1;
+  bool incomplete_results = 2;
+  repeated CodeResult items = 3;
+}
+
+message CodeResult {
+  string name = 1;
+  string path = 2;
+  string sha = 3;
+  string url = 4;
+  string git_url = 5;
+  string html_url = 6;
+  Repository repository = 7;
+  double score = 8;
+}
+
+message SearchUsersRequest {
+  string q = 1;
+  optional string order = 2;
+  optional int32 page = 3;
+  optional int32 per_page = 4;
+  optional string sort = 5;
+}
+
+message SearchUsersResponse {
+  int32 total_count = 1;
+  bool incomplete_results = 2;
+  repeated User items = 3;
+}
+
+// --- Data Models ---
+
+message Repository {
+  int64 id = 1;
+  string node_id = 2;
+  string name = 3;
+  string full_name = 4;
+  bool private = 5;
+  User owner = 6;
+  string html_url = 7;
+  optional string description = 8;
+  bool fork = 9;
+  string url = 10;
+  string created_at = 11;
+  string updated_at = 12;
+  string pushed_at = 13;
+  string git_url = 14;
+  string ssh_url = 15;
+  string clone_url = 16;
+  optional string homepage = 17;
+  int32 size = 18;
+  int32 stargazers_count = 19;
+  int32 watchers_count = 20;
+  optional string language = 21;
+  bool has_issues = 22;
+  bool has_projects = 23;
+  bool has_downloads = 24;
+  bool has_wiki = 25;
+  bool has_pages = 26;
+  int32 forks_count = 27;
+  int32 open_issues_count = 28;
+  optional License license = 29;
+  repeated string topics = 30;
+  string visibility = 31;
+  string default_branch = 32;
+  optional Permissions permissions = 33;
+}
+
+message Issue {
+  int64 id = 1;
+  string node_id = 2;
+  string url = 3;
+  string repository_url = 4;
+  string labels_url = 5;
+  string comments_url = 6;
+  string events_url = 7;
+  string html_url = 8;
+  int32 number = 9;
+  string state = 10;
+  string title = 11;
+  optional string body = 12;
+  User user = 13;
+  repeated Label labels = 14;
+  optional User assignee = 15;
+  repeated User assignees = 16;
+  optional Milestone milestone = 17;
+  bool locked = 18;
+  optional string active_lock_reason = 19;
+  int32 comments = 20;
+  optional PullRequestRef pull_request = 21;
+  optional string closed_at = 22;
+  string created_at = 23;
+  string updated_at = 24;
+}
+
+message PullRequestRef {
+  string url = 1;
+  string html_url = 2;
+  string diff_url = 3;
+  string patch_url = 4;
+}
+
+message User {
+  string login = 1;
+  int64 id = 2;
+  string node_id = 3;
+  string avatar_url = 4;
+  string gravatar_id = 5;
+  string url = 6;
+  string html_url = 7;
+  string followers_url = 8;
+  string following_url = 9;
+  string gists_url = 10;
+  string starred_url = 11;
+  string subscriptions_url = 12;
+  string organizations_url = 13;
+  string repos_url = 14;
+  string events_url = 15;
+  string received_events_url = 16;
+  string type = 17;
+  bool site_admin = 18;
+}
+
+message License {
+  string key = 1;
+  string name = 2;
+  string spdx_id = 3;
+  optional string url = 4;
+  optional string node_id = 5;
+}
+
+message Permissions {
+  bool admin = 1;
+  bool push = 2;
+  bool pull = 3;
+  optional bool maintain = 4;
+  optional bool triage = 5;
+}
+
+message Label {
+  int64 id = 1;
+  string node_id = 2;
+  string url = 3;
+  string name = 4;
+  optional string description = 5;
+  string color = 6;
+  bool default = 7;
+}
+
+message Milestone {
+  string url = 1;
+  string html_url = 2;
+  string labels_url = 3;
+  int64 id = 4;
+  string node_id = 5;
+  int32 number = 6;
+  string state = 7;
+  string title = 8;
+  optional string description = 9;
+  User creator = 10;
+  int32 open_issues = 11;
+  int32 closed_issues = 12;
+  string created_at = 13;
+  string updated_at = 14;
+  optional string closed_at = 15;
+  optional string due_on = 16;
+}
+
+message PullRequest {
+  int64 id = 1;
+  string node_id = 2;
+  string url = 3;
+  string html_url = 4;
+  string diff_url = 5;
+  string patch_url = 6;
+  string issue_url = 7;
+  int32 number = 8;
+  string state = 9;
+  bool locked = 10;
+  string title = 11;
+  User user = 12;
+  optional string body = 13;
+  string created_at = 14;
+  string updated_at = 15;
+  optional string closed_at = 16;
+  optional string merged_at = 17;
+  string merge_commit_sha = 18;
+  optional User assignee = 19;
+  repeated User assignees = 20;
+  repeated Label labels = 21;
+  optional Milestone milestone = 22;
+  bool draft = 23;
+  CommitHead head = 24;
+  CommitHead base = 25;
+}
+
+message CommitHead {
+  string label = 1;
+  string ref = 2;
+  string sha = 3;
+  User user = 4;
+  Repository repo = 5;
+}
+
+message Content {
+  string name = 1;
+  string path = 2;
+  string sha = 3;
+  int32 size = 4;
+  string url = 5;
+  string html_url = 6;
+  string git_url = 7;
+  string download_url = 8;
+  string type = 9;
+  Links _links = 10;
+}
+
+message Links {
+  string self = 1;
+  string git = 2;
+  string html = 3;
+}
+
+message Commit {
+  string sha = 1;
+  string node_id = 2;
+  string url = 3;
+  string html_url = 4;
+  User author = 5;
+  User committer = 6;
+  string message = 7;
+  Tree tree = 8;
+  repeated Parent parents = 9;
+  Verification verification = 10;
+}
+
+message Tree {
+  string sha = 1;
+  string url = 2;
+}
+
+message Parent {
+  string sha = 1;
+  string url = 2;
+  string html_url = 3;
+}
+
+message Verification {
+  bool verified = 1;
+  string reason = 2;
+  optional string signature = 3;
+  optional string payload = 4;
+}
+
+message Reference {
+  string ref = 1;
+  string node_id = 2;
+  string url = 3;
+  Object object = 4;
+}
+
+message IssueComment {
+  int64 id = 1;
+  string node_id = 2;
+  string url = 3;
+  string html_url = 4;
+  string body = 5;
+  User user = 6;
+  string created_at = 7;
+  string updated_at = 8;
+  string issue_url = 9;
+  string author_association = 10;
+}
+
+message PullRequestReview {
+  int64 id = 1;
+  string node_id = 2;
+  User user = 3;
+  string body = 4;
+  string state = 5;
+  string html_url = 6;
+  string pull_request_url = 7;
+  string author_association = 8;
+  string submitted_at = 9;
+  string commit_id = 10;
+}
+
+message PullRequestComment {
+  int64 id = 1;
+  string node_id = 2;
+  string url = 3;
+  string body = 4;
+  string path = 5;
+  int32 position = 6;
+  int32 original_position = 7;
+  string commit_id = 8;
+  string original_commit_id = 9;
+  User user = 10;
+  string created_at = 11;
+  string updated_at = 12;
+  string html_url = 13;
+  string pull_request_url = 14;
+  string author_association = 15;
+  int32 start_line = 16;
+  int32 original_start_line = 17;
+  int32 start_side = 18;
+  int32 line = 19;
+  int32 original_line = 20;
+  string side = 21;
+}

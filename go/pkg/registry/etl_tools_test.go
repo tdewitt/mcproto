@@ -6,7 +6,7 @@ import (
 )
 
 func TestPopulateETLTools(t *testing.T) {
-	reg := NewUnifiedRegistry()
+	reg := NewUnifiedRegistry(nil)
 	reg.PopulateETLTools()
 
 	tools := reg.List("")
@@ -38,7 +38,7 @@ func TestGenerateLeadEvent(t *testing.T) {
 	if evt.Domain != "marketing_leads" {
 		t.Errorf("Expected domain marketing_leads, got %s", evt.Domain)
 	}
-	
+
 	email := evt.Payload.Fields["email"].GetStringValue()
 	if email != "test-lead@example.com" {
 		t.Errorf("Expected email test-lead@example.com, got %s", email)
@@ -46,7 +46,7 @@ func TestGenerateLeadEvent(t *testing.T) {
 }
 
 func TestGenerateMockCatalog(t *testing.T) {
-	reg := NewUnifiedRegistry()
+	reg := NewUnifiedRegistry(nil)
 	reg.GenerateMockCatalog()
 	tools := reg.List("")
 	if len(tools) != 1000 {

@@ -1,5 +1,5 @@
 version: v1
-name: buf.build/mcpb/discovery
+name: buf.build/misfitdev/github
 breaking:
   use:
     - FILE
