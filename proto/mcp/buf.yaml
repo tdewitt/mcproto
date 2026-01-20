@@ -1,5 +1,5 @@
 version: v1
-name: buf.build/misfitdev/mcp
+name: buf.build/mcpb/mcp
 breaking:
   use:
     - FILE
