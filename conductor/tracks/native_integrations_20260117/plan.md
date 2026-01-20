@@ -17,5 +17,6 @@
 
 ## Phase 4: Verification
 - [x] Task: Create validation scripts to run RPCs against real data 591b9dc
+- [x] Task: Align GitHub tool naming with official MCP (drop GetRepository, add snake_case aliases) 4ea45f2
 - [ ] Task: Generate final success report
 - [ ] Task: Conductor - User Manual Verification 'Phase 4' (Protocol in workflow.md)
