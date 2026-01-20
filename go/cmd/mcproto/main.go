@@ -9,6 +9,7 @@ import (
 
 	"github.com/misfitdev/proto-mcp/go/mcp"
 	"github.com/misfitdev/proto-mcp/go/pkg/bsr"
+	"github.com/misfitdev/proto-mcp/go/pkg/github"
 	grpc_pkg "github.com/misfitdev/proto-mcp/go/pkg/grpc"
 	"github.com/misfitdev/proto-mcp/go/pkg/registry"
 	"github.com/misfitdev/proto-mcp/go/router"
@@ -36,6 +37,12 @@ func main() {
 		reg.PopulateETLTools()
 		reg.PopulateDiscoveryTools()
 		reg.GenerateMockCatalog() // Adds the 1,000 tools for the "Boss Demo"
+
+		if ghServer, err := github.NewServer(); err != nil {
+			fmt.Fprintf(os.Stderr, "Skipping GitHub tools: %v\n", err)
+		} else {
+			reg.PopulateGitHubTools(ghServer)
+		}
 	}
 
 	fmt.Fprintf(os.Stderr, "MC Proto Server starting... [Transport: %s]\n", *transport)

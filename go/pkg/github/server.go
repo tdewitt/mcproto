@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	gh "github.com/google/go-github/v69/github"
 	"golang.org/x/oauth2"
@@ -164,11 +165,20 @@ func convertIssue(i *gh.Issue) *Issue {
 }
 
 func (s *Server) CreateIssue(ctx context.Context, req *CreateIssueRequest) (*CreateIssueResponse, error) {
+	title := strings.TrimSpace(req.GetTitle())
+	if title == "" {
+		return nil, fmt.Errorf("title is required")
+	}
+
 	issueRequest := &gh.IssueRequest{
-		Title:     &req.Title,
-		Body:      req.Body,
-		Assignees: &req.Assignees,
-		Labels:    &req.Labels,
+		Title: &title,
+		Body:  req.Body,
+	}
+	if len(req.Assignees) > 0 {
+		issueRequest.Assignees = &req.Assignees
+	}
+	if len(req.Labels) > 0 {
+		issueRequest.Labels = &req.Labels
 	}
 	if req.Milestone != nil {
 		m := int(req.GetMilestone())

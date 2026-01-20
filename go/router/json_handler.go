@@ -1,11 +1,13 @@
 package router
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
 
 	"github.com/misfitdev/proto-mcp/go/mcp"
@@ -70,12 +72,12 @@ func NewJSONHandler(reg *registry.UnifiedRegistry, resolver schemaResolver) *JSO
 }
 
 func (h *JSONHandler) Handle(rw io.ReadWriter) error {
-	dec := json.NewDecoder(rw)
 	enc := json.NewEncoder(rw)
+	reader := bufio.NewReader(rw)
 
 	for {
 		var req jsonRPCRequest
-		if err := dec.Decode(&req); err != nil {
+		if err := readJSONRPCRequest(reader, &req); err != nil {
 			if errors.Is(err, io.EOF) {
 				return nil
 			}
@@ -126,6 +128,77 @@ func (h *JSONHandler) Handle(rw io.ReadWriter) error {
 			return fmt.Errorf("failed to encode JSON-RPC response: %w", err)
 		}
 	}
+}
+
+func readJSONRPCRequest(reader *bufio.Reader, req *jsonRPCRequest) error {
+	if hasContentLengthHeaderReader(reader) {
+		body, err := readContentLengthBody(reader)
+		if err != nil {
+			return err
+		}
+		return json.Unmarshal(body, req)
+	}
+
+	dec := json.NewDecoder(reader)
+	return dec.Decode(req)
+}
+
+func hasContentLengthHeaderReader(reader *bufio.Reader) bool {
+	for {
+		peek, err := reader.Peek(1)
+		if err != nil {
+			return false
+		}
+		if !isWhitespace(peek[0]) {
+			break
+		}
+		if _, err := reader.ReadByte(); err != nil {
+			return false
+		}
+	}
+
+	peek, err := reader.Peek(len("Content-Length:"))
+	if err != nil {
+		return false
+	}
+	return strings.EqualFold(string(peek), "Content-Length:")
+}
+
+func readContentLengthBody(reader *bufio.Reader) ([]byte, error) {
+	headers := make(map[string]string)
+	for {
+		line, err := reader.ReadString('\n')
+		if err != nil {
+			return nil, err
+		}
+		line = strings.TrimRight(line, "\r\n")
+		if line == "" {
+			break
+		}
+		parts := strings.SplitN(line, ":", 2)
+		if len(parts) != 2 {
+			continue
+		}
+		headers[strings.ToLower(strings.TrimSpace(parts[0]))] = strings.TrimSpace(parts[1])
+	}
+
+	lengthStr := headers["content-length"]
+	if lengthStr == "" {
+		return nil, fmt.Errorf("content-length header missing")
+	}
+	length, err := strconv.Atoi(lengthStr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid content-length: %w", err)
+	}
+	if length <= 0 {
+		return nil, fmt.Errorf("invalid content-length: %d", length)
+	}
+
+	body := make([]byte, length)
+	if _, err := io.ReadFull(reader, body); err != nil {
+		return nil, err
+	}
+	return body, nil
 }
 
 func (h *JSONHandler) listTools() []map[string]interface{} {

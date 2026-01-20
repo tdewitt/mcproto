@@ -3,6 +3,7 @@ package router
 import (
 	"bufio"
 	"io"
+	"strings"
 )
 
 type Protocol int
@@ -38,6 +39,9 @@ func (s *Sniffer) Detect() (Protocol, error) {
 	if !found {
 		return ProtocolJSON, nil
 	}
+	if hasContentLengthHeaderBytes(peek) {
+		return ProtocolJSON, nil
+	}
 	if firstByte == '{' {
 		return ProtocolJSON, nil
 	}
@@ -63,4 +67,11 @@ func firstNonWhitespace(data []byte) (byte, bool) {
 
 func isWhitespace(b byte) bool {
 	return b == ' ' || b == '\n' || b == '\r' || b == '\t'
+}
+
+func hasContentLengthHeaderBytes(data []byte) bool {
+	trimmed := strings.TrimLeftFunc(string(data), func(r rune) bool {
+		return r == ' ' || r == '\n' || r == '\r' || r == '\t'
+	})
+	return strings.HasPrefix(strings.ToLower(trimmed), "content-length:")
 }

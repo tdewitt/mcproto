@@ -5,6 +5,7 @@ import subprocess
 import sys
 import time
 from typing import List
+from shlex import join as shlex_join
 
 
 def build_command(args: argparse.Namespace) -> List[str]:
@@ -12,7 +13,7 @@ def build_command(args: argparse.Namespace) -> List[str]:
     cmd = [
         args.claude_bin,
         "--print",
-        "--strict-mcp-config",
+        "--verbose",
         "--mcp-config",
         args.config,
         "--permission-mode",
@@ -23,8 +24,6 @@ def build_command(args: argparse.Namespace) -> List[str]:
         cmd.extend(["--model", args.model])
     if args.debug:
         cmd.extend(["--debug", args.debug])
-    if args.verbose:
-        cmd.append("--verbose")
     cmd.append(args.prompt)
     return cmd
 
@@ -53,13 +52,18 @@ def main() -> int:
     args = parser.parse_args()
 
     cmd = build_command(args)
+    cmd_str = shlex_join(cmd)
 
     for attempt in range(1, args.attempts + 1):
         print(f"[demo] attempt {attempt}/{args.attempts}", file=sys.stderr)
+        print(f"[demo] command: {cmd_str}", file=sys.stderr)
+        start = time.time()
         try:
             result = run_once(cmd, args.timeout)
+            duration = time.time() - start
         except subprocess.TimeoutExpired:
-            print("[demo] attempt timed out", file=sys.stderr)
+            duration = time.time() - start
+            print(f"[demo] attempt timed out after {duration:.2f}s", file=sys.stderr)
             time.sleep(args.delay)
             continue
 
@@ -68,6 +72,7 @@ def main() -> int:
 
         if stdout:
             print(stdout)
+            print(f"[demo] attempt {attempt} completed in {duration:.2f}s", file=sys.stderr)
             return 0
 
         if stderr:
@@ -79,6 +84,7 @@ def main() -> int:
                 f"[demo] exit code {result.returncode}",
                 file=sys.stderr,
             )
+        print(f"[demo] attempt {attempt} finished in {duration:.2f}s with no stdout", file=sys.stderr)
 
         time.sleep(args.delay)
 

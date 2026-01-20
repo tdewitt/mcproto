@@ -10,6 +10,13 @@ ATTEMPTS="${CLAUDE_ATTEMPTS:-5}"
 TIMEOUT="${CLAUDE_TIMEOUT:-60}"
 DELAY="${CLAUDE_DELAY:-1.5}"
 
+if [[ -f "$ROOT/.env" ]]; then
+  set -a
+  # shellcheck disable=SC1090
+  source "$ROOT/.env"
+  set +a
+fi
+
 cleanup() {
   rm -f "$CONFIG"
 }
@@ -20,16 +27,18 @@ trap cleanup EXIT
   go build -o mcproto ./cmd/mcproto/main.go
 )
 
-PROMPT=${1:-"You have access to MCP tools search_registry, resolve_schema, and call_tool. Find a tool in the mcpb registry that can list data sources for analytics, resolve its schema, then call it. Use call_tool with the bsr_ref and tool_name if available. If arguments are required, supply minimal valid values. Return only the final tool output."}
+PROMPT=${1:-"You have meta tools: search_registry, resolve_schema, call_tool. I want to create an issue in GitHub using mcproto. First run search_registry with query \"mcproto github\" (mcpb-only) and pick the top GitHub MCP candidate. Resolve the schema for the tool that creates an issue, then call it to open a new issue in the GitHub repo tdewitt/mcproto. Include a short unique token in the title/body. Use call_tool with the bsr_ref and tool_name if available. Return the raw tool output (URL/issue number). Also print a step log with timings in seconds for each action you take (search, resolve, call)."}
 
 cat > "$CONFIG" <<EOF
 {
-  "mcproto": {
-    "command": "$ROOT/go/mcproto",
-    "args": ["--transport", "stdio"],
-    "env": {
-      "BUF_TOKEN": "${BUF_TOKEN}",
-      "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
+  "mcpServers": {
+    "mcproto": {
+      "command": "$ROOT/go/mcproto",
+      "args": ["--transport", "stdio"],
+      "env": {
+        "BUF_TOKEN": "${BUF_TOKEN:-}",
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN:-}"
+      }
     }
   }
 }

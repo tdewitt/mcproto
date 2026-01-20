@@ -28,6 +28,11 @@ func TestSniffer(t *testing.T) {
 			expected: ProtocolBinary,
 		},
 		{
+			name:     "JSON-RPC (Content-Length Header)",
+			input:    []byte("Content-Length: 18\r\n\r\n{\"jsonrpc\":\"2.0\"}"),
+			expected: ProtocolJSON,
+		},
+		{
 			name:     "Unknown",
 			input:    []byte("GET / HTTP/1.1"),
 			expected: ProtocolUnknown,

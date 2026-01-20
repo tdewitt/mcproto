@@ -61,6 +61,7 @@ func (r *UnifiedRegistry) SearchRegistry(ctx context.Context, query string) ([]S
 		return nil, fmt.Errorf("BSR client is not configured")
 	}
 
+	query = strings.TrimSpace(query)
 	repos, err := r.bsrClient.Search(ctx, query)
 	if err != nil {
 		return nil, err
@@ -68,6 +69,9 @@ func (r *UnifiedRegistry) SearchRegistry(ctx context.Context, query string) ([]S
 
 	toolNamesByRef := r.toolNamesByBsrRef()
 	candidates := make([]SearchCandidate, 0, len(repos))
+	seen := make(map[string]bool)
+
+	const maxMatchesPerRepo = 8
 
 	for _, repo := range repos {
 		if repo.Owner != bsrOwnerFilter {
@@ -97,7 +101,7 @@ func (r *UnifiedRegistry) SearchRegistry(ctx context.Context, query string) ([]S
 					strings.Contains(name, "Task") ||
 					strings.Contains(name, "Call")
 
-				if !isLikelyTool || foundCount >= 3 {
+				if !isLikelyTool || foundCount >= maxMatchesPerRepo {
 					continue
 				}
 
@@ -119,7 +123,10 @@ func (r *UnifiedRegistry) SearchRegistry(ctx context.Context, query string) ([]S
 					candidate.LocalToolNames = names
 				}
 
-				candidates = append(candidates, candidate)
+				if !seen[bsrRef] {
+					candidates = append(candidates, candidate)
+					seen[bsrRef] = true
+				}
 				foundCount++
 			}
 		}
