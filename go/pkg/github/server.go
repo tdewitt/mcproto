@@ -114,16 +114,6 @@ func convertUser(u *gh.User) *User {
 	}
 }
 
-func (s *Server) GetRepository(ctx context.Context, req *GetRepositoryRequest) (*GetRepositoryResponse, error) {
-	repo, _, err := s.client.Repositories.Get(ctx, req.Owner, req.Repo)
-	if err != nil {
-		return nil, err
-	}
-	return &GetRepositoryResponse{
-		Repository: convertRepository(repo),
-	}, nil
-}
-
 func (s *Server) ListIssues(ctx context.Context, req *ListIssuesRequest) (*ListIssuesResponse, error) {
 	opts := &gh.IssueListByRepoOptions{
 		State:     req.GetState(),

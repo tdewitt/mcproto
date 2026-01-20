@@ -9,7 +9,6 @@ service GitHubService {
   // Repository Operations
   rpc CreateRepository(CreateRepositoryRequest) returns (CreateRepositoryResponse);
   rpc SearchRepositories(SearchRepositoriesRequest) returns (SearchRepositoriesResponse);
-  rpc GetRepository(GetRepositoryRequest) returns (GetRepositoryResponse);
   rpc ForkRepository(ForkRepositoryRequest) returns (ForkRepositoryResponse);
   
   // File Operations
@@ -49,10 +48,6 @@ service GitHubService {
 // --- Request/Response Messages ---
 
 message CreateRepositoryResponse {
-  Repository repository = 1;
-}
-
-message GetRepositoryResponse {
   Repository repository = 1;
 }
 
@@ -138,11 +133,6 @@ message SearchRepositoriesResponse {
   int32 total_count = 1;
   bool incomplete_results = 2;
   repeated Repository repositories = 3;
-}
-
-message GetRepositoryRequest {
-  string owner = 1;
-  string repo = 2;
 }
 
 message ForkRepositoryRequest {
@@ -707,4 +697,30 @@ message PullRequestComment {
   int32 line = 19;
   int32 original_line = 20;
   string side = 21;
+}
+
+message FileChange {
+  string sha = 1;
+  string filename = 2;
+  string status = 3;
+  int32 additions = 4;
+  int32 deletions = 5;
+  int32 changes = 6;
+  string blob_url = 7;
+  string raw_url = 8;
+  string contents_url = 9;
+  optional string patch = 10;
+}
+
+message Status {
+  string url = 1;
+  string avatar_url = 2;
+  int64 id = 3;
+  string node_id = 4;
+  string state = 5;
+  string description = 6;
+  string target_url = 7;
+  string context = 8;
+  string created_at = 9;
+  string updated_at = 10;
 }

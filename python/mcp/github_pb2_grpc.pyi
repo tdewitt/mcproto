@@ -36,7 +36,6 @@ class GitHubServiceStub:
     CreateRepository: _grpc.UnaryUnaryMultiCallable[_github_pb2.CreateRepositoryRequest, _github_pb2.CreateRepositoryResponse]
     """Repository Operations"""
     SearchRepositories: _grpc.UnaryUnaryMultiCallable[_github_pb2.SearchRepositoriesRequest, _github_pb2.SearchRepositoriesResponse]
-    GetRepository: _grpc.UnaryUnaryMultiCallable[_github_pb2.GetRepositoryRequest, _github_pb2.GetRepositoryResponse]
     ForkRepository: _grpc.UnaryUnaryMultiCallable[_github_pb2.ForkRepositoryRequest, _github_pb2.ForkRepositoryResponse]
     GetFileContents: _grpc.UnaryUnaryMultiCallable[_github_pb2.GetFileContentsRequest, _github_pb2.GetFileContentsResponse]
     """File Operations"""
@@ -75,7 +74,6 @@ class GitHubServiceAsyncStub(GitHubServiceStub):
     CreateRepository: _aio.UnaryUnaryMultiCallable[_github_pb2.CreateRepositoryRequest, _github_pb2.CreateRepositoryResponse]  # type: ignore[assignment]
     """Repository Operations"""
     SearchRepositories: _aio.UnaryUnaryMultiCallable[_github_pb2.SearchRepositoriesRequest, _github_pb2.SearchRepositoriesResponse]  # type: ignore[assignment]
-    GetRepository: _aio.UnaryUnaryMultiCallable[_github_pb2.GetRepositoryRequest, _github_pb2.GetRepositoryResponse]  # type: ignore[assignment]
     ForkRepository: _aio.UnaryUnaryMultiCallable[_github_pb2.ForkRepositoryRequest, _github_pb2.ForkRepositoryResponse]  # type: ignore[assignment]
     GetFileContents: _aio.UnaryUnaryMultiCallable[_github_pb2.GetFileContentsRequest, _github_pb2.GetFileContentsResponse]  # type: ignore[assignment]
     """File Operations"""
@@ -123,13 +121,6 @@ class GitHubServiceServicer(metaclass=_abc_1.ABCMeta):
         request: _github_pb2.SearchRepositoriesRequest,
         context: _ServicerContext,
     ) -> _typing.Union[_github_pb2.SearchRepositoriesResponse, _abc.Awaitable[_github_pb2.SearchRepositoriesResponse]]: ...
-
-    @_abc_1.abstractmethod
-    def GetRepository(
-        self,
-        request: _github_pb2.GetRepositoryRequest,
-        context: _ServicerContext,
-    ) -> _typing.Union[_github_pb2.GetRepositoryResponse, _abc.Awaitable[_github_pb2.GetRepositoryResponse]]: ...
 
     @_abc_1.abstractmethod
     def ForkRepository(

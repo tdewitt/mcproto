@@ -10,7 +10,7 @@ We are building a native, binary-first MCP server for GitHub. This server will b
 4.  **Verify:** Prove it works with real data.
 
 ## Scope
-- **GitHub:** Search Repos, Get Repo, List Issues, Create Issue.
+- **GitHub:** Search Repos, List Issues, Create Issue.
 
 ## Technical Constraints
 - Pure `proto3` (no google wrappers).

@@ -3,7 +3,7 @@
 import grpc
 import warnings
 
-from . import github_pb2 as github__pb2
+import github_pb2 as github__pb2
 
 GRPC_GENERATED_VERSION = '1.76.0'
 GRPC_VERSION = grpc.__version__
@@ -44,11 +44,6 @@ class GitHubServiceStub(object):
                 '/tucker.mcproto.github.v1.GitHubService/SearchRepositories',
                 request_serializer=github__pb2.SearchRepositoriesRequest.SerializeToString,
                 response_deserializer=github__pb2.SearchRepositoriesResponse.FromString,
-                _registered_method=True)
-        self.GetRepository = channel.unary_unary(
-                '/tucker.mcproto.github.v1.GitHubService/GetRepository',
-                request_serializer=github__pb2.GetRepositoryRequest.SerializeToString,
-                response_deserializer=github__pb2.GetRepositoryResponse.FromString,
                 _registered_method=True)
         self.ForkRepository = channel.unary_unary(
                 '/tucker.mcproto.github.v1.GitHubService/ForkRepository',
@@ -184,12 +179,6 @@ class GitHubServiceServicer(object):
         raise NotImplementedError('Method not implemented!')
 
     def SearchRepositories(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def GetRepository(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -356,11 +345,6 @@ def add_GitHubServiceServicer_to_server(servicer, server):
                     servicer.SearchRepositories,
                     request_deserializer=github__pb2.SearchRepositoriesRequest.FromString,
                     response_serializer=github__pb2.SearchRepositoriesResponse.SerializeToString,
-            ),
-            'GetRepository': grpc.unary_unary_rpc_method_handler(
-                    servicer.GetRepository,
-                    request_deserializer=github__pb2.GetRepositoryRequest.FromString,
-                    response_serializer=github__pb2.GetRepositoryResponse.SerializeToString,
             ),
             'ForkRepository': grpc.unary_unary_rpc_method_handler(
                     servicer.ForkRepository,
@@ -538,33 +522,6 @@ class GitHubService(object):
             '/tucker.mcproto.github.v1.GitHubService/SearchRepositories',
             github__pb2.SearchRepositoriesRequest.SerializeToString,
             github__pb2.SearchRepositoriesResponse.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
-    def GetRepository(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/tucker.mcproto.github.v1.GitHubService/GetRepository',
-            github__pb2.GetRepositoryRequest.SerializeToString,
-            github__pb2.GetRepositoryResponse.FromString,
             options,
             channel_credentials,
             insecure,

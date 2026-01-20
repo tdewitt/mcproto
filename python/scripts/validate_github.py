@@ -35,16 +35,7 @@ def validate_github():
         for repo in resp.repositories[:3]:
             print(f" - {repo.full_name} ({repo.html_url})")
 
-        # 2. Get Repository
-        if resp.repositories:
-            target_repo = resp.repositories[0]
-            print(f"\nTesting GetRepository ({target_repo.full_name})...")
-            get_req = github_pb2.GetRepositoryRequest(owner=target_repo.owner.login, repo=target_repo.name)
-            get_resp = stub.GetRepository(get_req)
-            print(f"SUCCESS: Retrieved {get_resp.repository.full_name}")
-            print(f"Description: {get_resp.repository.description}")
-
-        # 3. List Issues
+        # 2. List Issues
         if resp.repositories:
             target_repo = resp.repositories[0]
             print(f"\nTesting ListIssues ({target_repo.full_name})...")

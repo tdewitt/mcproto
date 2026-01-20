@@ -40,25 +40,6 @@ class CreateRepositoryResponse(_message.Message):
 Global___CreateRepositoryResponse: _TypeAlias = CreateRepositoryResponse  # noqa: Y015
 
 @_typing.final
-class GetRepositoryResponse(_message.Message):
-    DESCRIPTOR: _descriptor.Descriptor
-
-    REPOSITORY_FIELD_NUMBER: _builtins.int
-    @_builtins.property
-    def repository(self) -> Global___Repository: ...
-    def __init__(
-        self,
-        *,
-        repository: Global___Repository | None = ...,
-    ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _typing.Literal["repository", b"repository"]  # noqa: Y015
-    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["repository", b"repository"]  # noqa: Y015
-    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
-
-Global___GetRepositoryResponse: _TypeAlias = GetRepositoryResponse  # noqa: Y015
-
-@_typing.final
 class ForkRepositoryResponse(_message.Message):
     DESCRIPTOR: _descriptor.Descriptor
 
@@ -211,6 +192,140 @@ class GetPullRequestResponse(_message.Message):
 Global___GetPullRequestResponse: _TypeAlias = GetPullRequestResponse  # noqa: Y015
 
 @_typing.final
+class CreatePullRequestReviewResponse(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
+
+    REVIEW_FIELD_NUMBER: _builtins.int
+    @_builtins.property
+    def review(self) -> Global___PullRequestReview: ...
+    def __init__(
+        self,
+        *,
+        review: Global___PullRequestReview | None = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _typing.Literal["review", b"review"]  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["review", b"review"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+
+Global___CreatePullRequestReviewResponse: _TypeAlias = CreatePullRequestReviewResponse  # noqa: Y015
+
+@_typing.final
+class MergePullRequestResponse(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
+
+    SHA_FIELD_NUMBER: _builtins.int
+    MERGED_FIELD_NUMBER: _builtins.int
+    MESSAGE_FIELD_NUMBER: _builtins.int
+    sha: _builtins.str
+    merged: _builtins.bool
+    message: _builtins.str
+    def __init__(
+        self,
+        *,
+        sha: _builtins.str = ...,
+        merged: _builtins.bool = ...,
+        message: _builtins.str = ...,
+    ) -> None: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["merged", b"merged", "message", b"message", "sha", b"sha"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+
+Global___MergePullRequestResponse: _TypeAlias = MergePullRequestResponse  # noqa: Y015
+
+@_typing.final
+class GetPullRequestFilesResponse(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
+
+    FILES_FIELD_NUMBER: _builtins.int
+    @_builtins.property
+    def files(self) -> _containers.RepeatedCompositeFieldContainer[Global___FileChange]: ...
+    def __init__(
+        self,
+        *,
+        files: _abc.Iterable[Global___FileChange] | None = ...,
+    ) -> None: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["files", b"files"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+
+Global___GetPullRequestFilesResponse: _TypeAlias = GetPullRequestFilesResponse  # noqa: Y015
+
+@_typing.final
+class GetPullRequestStatusResponse(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
+
+    STATE_FIELD_NUMBER: _builtins.int
+    STATUS_FIELD_NUMBER: _builtins.int
+    TOTAL_COUNT_FIELD_NUMBER: _builtins.int
+    state: _builtins.str
+    total_count: _builtins.int
+    @_builtins.property
+    def status(self) -> _containers.RepeatedCompositeFieldContainer[Global___Status]: ...
+    def __init__(
+        self,
+        *,
+        state: _builtins.str = ...,
+        status: _abc.Iterable[Global___Status] | None = ...,
+        total_count: _builtins.int = ...,
+    ) -> None: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["state", b"state", "status", b"status", "total_count", b"total_count"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+
+Global___GetPullRequestStatusResponse: _TypeAlias = GetPullRequestStatusResponse  # noqa: Y015
+
+@_typing.final
+class UpdatePullRequestBranchResponse(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
+
+    MESSAGE_FIELD_NUMBER: _builtins.int
+    URL_FIELD_NUMBER: _builtins.int
+    message: _builtins.str
+    url: _builtins.str
+    def __init__(
+        self,
+        *,
+        message: _builtins.str = ...,
+        url: _builtins.str = ...,
+    ) -> None: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["message", b"message", "url", b"url"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+
+Global___UpdatePullRequestBranchResponse: _TypeAlias = UpdatePullRequestBranchResponse  # noqa: Y015
+
+@_typing.final
+class GetPullRequestCommentsResponse(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
+
+    COMMENTS_FIELD_NUMBER: _builtins.int
+    @_builtins.property
+    def comments(self) -> _containers.RepeatedCompositeFieldContainer[Global___PullRequestComment]: ...
+    def __init__(
+        self,
+        *,
+        comments: _abc.Iterable[Global___PullRequestComment] | None = ...,
+    ) -> None: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["comments", b"comments"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+
+Global___GetPullRequestCommentsResponse: _TypeAlias = GetPullRequestCommentsResponse  # noqa: Y015
+
+@_typing.final
+class GetPullRequestReviewsResponse(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
+
+    REVIEWS_FIELD_NUMBER: _builtins.int
+    @_builtins.property
+    def reviews(self) -> _containers.RepeatedCompositeFieldContainer[Global___PullRequestReview]: ...
+    def __init__(
+        self,
+        *,
+        reviews: _abc.Iterable[Global___PullRequestReview] | None = ...,
+    ) -> None: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["reviews", b"reviews"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+
+Global___GetPullRequestReviewsResponse: _TypeAlias = GetPullRequestReviewsResponse  # noqa: Y015
+
+@_typing.final
 class CreateRepositoryRequest(_message.Message):
     DESCRIPTOR: _descriptor.Descriptor
 
@@ -303,25 +418,6 @@ class SearchRepositoriesResponse(_message.Message):
     def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
 
 Global___SearchRepositoriesResponse: _TypeAlias = SearchRepositoriesResponse  # noqa: Y015
-
-@_typing.final
-class GetRepositoryRequest(_message.Message):
-    DESCRIPTOR: _descriptor.Descriptor
-
-    OWNER_FIELD_NUMBER: _builtins.int
-    REPO_FIELD_NUMBER: _builtins.int
-    owner: _builtins.str
-    repo: _builtins.str
-    def __init__(
-        self,
-        *,
-        owner: _builtins.str = ...,
-        repo: _builtins.str = ...,
-    ) -> None: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["owner", b"owner", "repo", b"repo"]  # noqa: Y015
-    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
-
-Global___GetRepositoryRequest: _TypeAlias = GetRepositoryRequest  # noqa: Y015
 
 @_typing.final
 class ForkRepositoryRequest(_message.Message):
@@ -1262,47 +1358,6 @@ class MergePullRequestRequest(_message.Message):
 Global___MergePullRequestRequest: _TypeAlias = MergePullRequestRequest  # noqa: Y015
 
 @_typing.final
-class CreatePullRequestReviewResponse(_message.Message):
-    DESCRIPTOR: _descriptor.Descriptor
-
-    REVIEW_FIELD_NUMBER: _builtins.int
-    @_builtins.property
-    def review(self) -> Global___PullRequestReview: ...
-    def __init__(
-        self,
-        *,
-        review: Global___PullRequestReview | None = ...,
-    ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _typing.Literal["review", b"review"]  # noqa: Y015
-    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["review", b"review"]  # noqa: Y015
-    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
-
-Global___CreatePullRequestReviewResponse: _TypeAlias = CreatePullRequestReviewResponse  # noqa: Y015
-
-@_typing.final
-class MergePullRequestResponse(_message.Message):
-    DESCRIPTOR: _descriptor.Descriptor
-
-    SHA_FIELD_NUMBER: _builtins.int
-    MERGED_FIELD_NUMBER: _builtins.int
-    MESSAGE_FIELD_NUMBER: _builtins.int
-    sha: _builtins.str
-    merged: _builtins.bool
-    message: _builtins.str
-    def __init__(
-        self,
-        *,
-        sha: _builtins.str = ...,
-        merged: _builtins.bool = ...,
-        message: _builtins.str = ...,
-    ) -> None: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["merged", b"merged", "message", b"message", "sha", b"sha"]  # noqa: Y015
-    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
-
-Global___MergePullRequestResponse: _TypeAlias = MergePullRequestResponse  # noqa: Y015
-
-@_typing.final
 class GetPullRequestFilesRequest(_message.Message):
     DESCRIPTOR: _descriptor.Descriptor
 
@@ -1325,71 +1380,6 @@ class GetPullRequestFilesRequest(_message.Message):
 Global___GetPullRequestFilesRequest: _TypeAlias = GetPullRequestFilesRequest  # noqa: Y015
 
 @_typing.final
-class GetPullRequestFilesResponse(_message.Message):
-    DESCRIPTOR: _descriptor.Descriptor
-
-    FILES_FIELD_NUMBER: _builtins.int
-    @_builtins.property
-    def files(self) -> _containers.RepeatedCompositeFieldContainer[Global___FileChange]: ...
-    def __init__(
-        self,
-        *,
-        files: _abc.Iterable[Global___FileChange] | None = ...,
-    ) -> None: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["files", b"files"]  # noqa: Y015
-    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
-
-Global___GetPullRequestFilesResponse: _TypeAlias = GetPullRequestFilesResponse  # noqa: Y015
-
-@_typing.final
-class FileChange(_message.Message):
-    DESCRIPTOR: _descriptor.Descriptor
-
-    SHA_FIELD_NUMBER: _builtins.int
-    FILENAME_FIELD_NUMBER: _builtins.int
-    STATUS_FIELD_NUMBER: _builtins.int
-    ADDITIONS_FIELD_NUMBER: _builtins.int
-    DELETIONS_FIELD_NUMBER: _builtins.int
-    CHANGES_FIELD_NUMBER: _builtins.int
-    BLOB_URL_FIELD_NUMBER: _builtins.int
-    RAW_URL_FIELD_NUMBER: _builtins.int
-    CONTENTS_URL_FIELD_NUMBER: _builtins.int
-    PATCH_FIELD_NUMBER: _builtins.int
-    sha: _builtins.str
-    filename: _builtins.str
-    status: _builtins.str
-    additions: _builtins.int
-    deletions: _builtins.int
-    changes: _builtins.int
-    blob_url: _builtins.str
-    raw_url: _builtins.str
-    contents_url: _builtins.str
-    patch: _builtins.str
-    def __init__(
-        self,
-        *,
-        sha: _builtins.str = ...,
-        filename: _builtins.str = ...,
-        status: _builtins.str = ...,
-        additions: _builtins.int = ...,
-        deletions: _builtins.int = ...,
-        changes: _builtins.int = ...,
-        blob_url: _builtins.str = ...,
-        raw_url: _builtins.str = ...,
-        contents_url: _builtins.str = ...,
-        patch: _builtins.str | None = ...,
-    ) -> None: ...
-    _HasFieldArgType: _TypeAlias = _typing.Literal["_patch", b"_patch", "patch", b"patch"]  # noqa: Y015
-    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["_patch", b"_patch", "additions", b"additions", "blob_url", b"blob_url", "changes", b"changes", "contents_url", b"contents_url", "deletions", b"deletions", "filename", b"filename", "patch", b"patch", "raw_url", b"raw_url", "sha", b"sha", "status", b"status"]  # noqa: Y015
-    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
-    _WhichOneofReturnType__patch: _TypeAlias = _typing.Literal["patch"]  # noqa: Y015
-    _WhichOneofArgType__patch: _TypeAlias = _typing.Literal["_patch", b"_patch"]  # noqa: Y015
-    def WhichOneof(self, oneof_group: _WhichOneofArgType__patch) -> _WhichOneofReturnType__patch | None: ...
-
-Global___FileChange: _TypeAlias = FileChange  # noqa: Y015
-
-@_typing.final
 class GetPullRequestStatusRequest(_message.Message):
     DESCRIPTOR: _descriptor.Descriptor
 
@@ -1410,72 +1400,6 @@ class GetPullRequestStatusRequest(_message.Message):
     def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
 
 Global___GetPullRequestStatusRequest: _TypeAlias = GetPullRequestStatusRequest  # noqa: Y015
-
-@_typing.final
-class GetPullRequestStatusResponse(_message.Message):
-    DESCRIPTOR: _descriptor.Descriptor
-
-    STATE_FIELD_NUMBER: _builtins.int
-    STATUS_FIELD_NUMBER: _builtins.int
-    TOTAL_COUNT_FIELD_NUMBER: _builtins.int
-    state: _builtins.str
-    total_count: _builtins.int
-    @_builtins.property
-    def status(self) -> _containers.RepeatedCompositeFieldContainer[Global___Status]: ...
-    def __init__(
-        self,
-        *,
-        state: _builtins.str = ...,
-        status: _abc.Iterable[Global___Status] | None = ...,
-        total_count: _builtins.int = ...,
-    ) -> None: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["state", b"state", "status", b"status", "total_count", b"total_count"]  # noqa: Y015
-    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
-
-Global___GetPullRequestStatusResponse: _TypeAlias = GetPullRequestStatusResponse  # noqa: Y015
-
-@_typing.final
-class Status(_message.Message):
-    DESCRIPTOR: _descriptor.Descriptor
-
-    URL_FIELD_NUMBER: _builtins.int
-    AVATAR_URL_FIELD_NUMBER: _builtins.int
-    ID_FIELD_NUMBER: _builtins.int
-    NODE_ID_FIELD_NUMBER: _builtins.int
-    STATE_FIELD_NUMBER: _builtins.int
-    DESCRIPTION_FIELD_NUMBER: _builtins.int
-    TARGET_URL_FIELD_NUMBER: _builtins.int
-    CONTEXT_FIELD_NUMBER: _builtins.int
-    CREATED_AT_FIELD_NUMBER: _builtins.int
-    UPDATED_AT_FIELD_NUMBER: _builtins.int
-    url: _builtins.str
-    avatar_url: _builtins.str
-    id: _builtins.int
-    node_id: _builtins.str
-    state: _builtins.str
-    description: _builtins.str
-    target_url: _builtins.str
-    context: _builtins.str
-    created_at: _builtins.str
-    updated_at: _builtins.str
-    def __init__(
-        self,
-        *,
-        url: _builtins.str = ...,
-        avatar_url: _builtins.str = ...,
-        id: _builtins.int = ...,
-        node_id: _builtins.str = ...,
-        state: _builtins.str = ...,
-        description: _builtins.str = ...,
-        target_url: _builtins.str = ...,
-        context: _builtins.str = ...,
-        created_at: _builtins.str = ...,
-        updated_at: _builtins.str = ...,
-    ) -> None: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["avatar_url", b"avatar_url", "context", b"context", "created_at", b"created_at", "description", b"description", "id", b"id", "node_id", b"node_id", "state", b"state", "target_url", b"target_url", "updated_at", b"updated_at", "url", b"url"]  # noqa: Y015
-    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
-
-Global___Status: _TypeAlias = Status  # noqa: Y015
 
 @_typing.final
 class UpdatePullRequestBranchRequest(_message.Message):
@@ -1508,25 +1432,6 @@ class UpdatePullRequestBranchRequest(_message.Message):
 Global___UpdatePullRequestBranchRequest: _TypeAlias = UpdatePullRequestBranchRequest  # noqa: Y015
 
 @_typing.final
-class UpdatePullRequestBranchResponse(_message.Message):
-    DESCRIPTOR: _descriptor.Descriptor
-
-    MESSAGE_FIELD_NUMBER: _builtins.int
-    URL_FIELD_NUMBER: _builtins.int
-    message: _builtins.str
-    url: _builtins.str
-    def __init__(
-        self,
-        *,
-        message: _builtins.str = ...,
-        url: _builtins.str = ...,
-    ) -> None: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["message", b"message", "url", b"url"]  # noqa: Y015
-    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
-
-Global___UpdatePullRequestBranchResponse: _TypeAlias = UpdatePullRequestBranchResponse  # noqa: Y015
-
-@_typing.final
 class GetPullRequestCommentsRequest(_message.Message):
     DESCRIPTOR: _descriptor.Descriptor
 
@@ -1549,23 +1454,6 @@ class GetPullRequestCommentsRequest(_message.Message):
 Global___GetPullRequestCommentsRequest: _TypeAlias = GetPullRequestCommentsRequest  # noqa: Y015
 
 @_typing.final
-class GetPullRequestCommentsResponse(_message.Message):
-    DESCRIPTOR: _descriptor.Descriptor
-
-    COMMENTS_FIELD_NUMBER: _builtins.int
-    @_builtins.property
-    def comments(self) -> _containers.RepeatedCompositeFieldContainer[Global___PullRequestComment]: ...
-    def __init__(
-        self,
-        *,
-        comments: _abc.Iterable[Global___PullRequestComment] | None = ...,
-    ) -> None: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["comments", b"comments"]  # noqa: Y015
-    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
-
-Global___GetPullRequestCommentsResponse: _TypeAlias = GetPullRequestCommentsResponse  # noqa: Y015
-
-@_typing.final
 class GetPullRequestReviewsRequest(_message.Message):
     DESCRIPTOR: _descriptor.Descriptor
 
@@ -1586,23 +1474,6 @@ class GetPullRequestReviewsRequest(_message.Message):
     def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
 
 Global___GetPullRequestReviewsRequest: _TypeAlias = GetPullRequestReviewsRequest  # noqa: Y015
-
-@_typing.final
-class GetPullRequestReviewsResponse(_message.Message):
-    DESCRIPTOR: _descriptor.Descriptor
-
-    REVIEWS_FIELD_NUMBER: _builtins.int
-    @_builtins.property
-    def reviews(self) -> _containers.RepeatedCompositeFieldContainer[Global___PullRequestReview]: ...
-    def __init__(
-        self,
-        *,
-        reviews: _abc.Iterable[Global___PullRequestReview] | None = ...,
-    ) -> None: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["reviews", b"reviews"]  # noqa: Y015
-    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
-
-Global___GetPullRequestReviewsResponse: _TypeAlias = GetPullRequestReviewsResponse  # noqa: Y015
 
 @_typing.final
 class SearchCodeRequest(_message.Message):
@@ -2856,3 +2727,94 @@ class PullRequestComment(_message.Message):
     def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
 
 Global___PullRequestComment: _TypeAlias = PullRequestComment  # noqa: Y015
+
+@_typing.final
+class FileChange(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
+
+    SHA_FIELD_NUMBER: _builtins.int
+    FILENAME_FIELD_NUMBER: _builtins.int
+    STATUS_FIELD_NUMBER: _builtins.int
+    ADDITIONS_FIELD_NUMBER: _builtins.int
+    DELETIONS_FIELD_NUMBER: _builtins.int
+    CHANGES_FIELD_NUMBER: _builtins.int
+    BLOB_URL_FIELD_NUMBER: _builtins.int
+    RAW_URL_FIELD_NUMBER: _builtins.int
+    CONTENTS_URL_FIELD_NUMBER: _builtins.int
+    PATCH_FIELD_NUMBER: _builtins.int
+    sha: _builtins.str
+    filename: _builtins.str
+    status: _builtins.str
+    additions: _builtins.int
+    deletions: _builtins.int
+    changes: _builtins.int
+    blob_url: _builtins.str
+    raw_url: _builtins.str
+    contents_url: _builtins.str
+    patch: _builtins.str
+    def __init__(
+        self,
+        *,
+        sha: _builtins.str = ...,
+        filename: _builtins.str = ...,
+        status: _builtins.str = ...,
+        additions: _builtins.int = ...,
+        deletions: _builtins.int = ...,
+        changes: _builtins.int = ...,
+        blob_url: _builtins.str = ...,
+        raw_url: _builtins.str = ...,
+        contents_url: _builtins.str = ...,
+        patch: _builtins.str | None = ...,
+    ) -> None: ...
+    _HasFieldArgType: _TypeAlias = _typing.Literal["_patch", b"_patch", "patch", b"patch"]  # noqa: Y015
+    def HasField(self, field_name: _HasFieldArgType) -> _builtins.bool: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["_patch", b"_patch", "additions", b"additions", "blob_url", b"blob_url", "changes", b"changes", "contents_url", b"contents_url", "deletions", b"deletions", "filename", b"filename", "patch", b"patch", "raw_url", b"raw_url", "sha", b"sha", "status", b"status"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+    _WhichOneofReturnType__patch: _TypeAlias = _typing.Literal["patch"]  # noqa: Y015
+    _WhichOneofArgType__patch: _TypeAlias = _typing.Literal["_patch", b"_patch"]  # noqa: Y015
+    def WhichOneof(self, oneof_group: _WhichOneofArgType__patch) -> _WhichOneofReturnType__patch | None: ...
+
+Global___FileChange: _TypeAlias = FileChange  # noqa: Y015
+
+@_typing.final
+class Status(_message.Message):
+    DESCRIPTOR: _descriptor.Descriptor
+
+    URL_FIELD_NUMBER: _builtins.int
+    AVATAR_URL_FIELD_NUMBER: _builtins.int
+    ID_FIELD_NUMBER: _builtins.int
+    NODE_ID_FIELD_NUMBER: _builtins.int
+    STATE_FIELD_NUMBER: _builtins.int
+    DESCRIPTION_FIELD_NUMBER: _builtins.int
+    TARGET_URL_FIELD_NUMBER: _builtins.int
+    CONTEXT_FIELD_NUMBER: _builtins.int
+    CREATED_AT_FIELD_NUMBER: _builtins.int
+    UPDATED_AT_FIELD_NUMBER: _builtins.int
+    url: _builtins.str
+    avatar_url: _builtins.str
+    id: _builtins.int
+    node_id: _builtins.str
+    state: _builtins.str
+    description: _builtins.str
+    target_url: _builtins.str
+    context: _builtins.str
+    created_at: _builtins.str
+    updated_at: _builtins.str
+    def __init__(
+        self,
+        *,
+        url: _builtins.str = ...,
+        avatar_url: _builtins.str = ...,
+        id: _builtins.int = ...,
+        node_id: _builtins.str = ...,
+        state: _builtins.str = ...,
+        description: _builtins.str = ...,
+        target_url: _builtins.str = ...,
+        context: _builtins.str = ...,
+        created_at: _builtins.str = ...,
+        updated_at: _builtins.str = ...,
+    ) -> None: ...
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["avatar_url", b"avatar_url", "context", b"context", "created_at", b"created_at", "description", b"description", "id", b"id", "node_id", b"node_id", "state", b"state", "target_url", b"target_url", "updated_at", b"updated_at", "url", b"url"]  # noqa: Y015
+    def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
+
+Global___Status: _TypeAlias = Status  # noqa: Y015
