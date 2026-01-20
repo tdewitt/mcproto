@@ -1,0 +1,5 @@
+grpcio
+protobuf
+requests
+pytest
+tiktoken
