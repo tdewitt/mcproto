@@ -41,10 +41,10 @@ python3 python/examples/boss_demo.py
 
 ## Architecture
 MC Proto utilizes the **Buf Schema Registry** as a runtime blueprint provider:
-1. **Server** (`go/cmd/mcproto`) advertises a \`bsr_ref\` pointer.
-2. **Client** library (\`python/mcp\`) fetches the \`FileDescriptorSet\` from the BSR.
+1. **Server** (`go/cmd/mcproto`) advertises a `bsr_ref` pointer.
+2. **Client** library (`python/mcp`) fetches the `FileDescriptorSet` from the BSR.
 3. **LLM** operates on a semantic summary of the tool.
-4. **Binary Execution** is performed using dynamic message reflection (\`dynamicpb\` in Go, \`DescriptorPool\` in Python).
+4. **Binary Execution** is performed using dynamic message reflection (`dynamicpb` in Go, `DescriptorPool` in Python).
 
 ---
 *Developed as a technical spike to verify the viability of binary-first AI orchestration.*

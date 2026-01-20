@@ -261,6 +261,39 @@ def tools_list_stdio(command: str, args: List[str], env: Dict[str, str]) -> Dict
     return resp
 
 
+# ----- GitHub issue comment helper ------------------------------------------
+
+def parse_issue_url(url: str) -> Optional[Tuple[str, str, int]]:
+    """
+    Parse a GitHub issue URL into (owner, repo, number).
+    """
+    m = re.match(r"https?://github\\.com/([^/]+)/([^/]+)/issues/(\\d+)", url)
+    if not m:
+        return None
+    owner, repo, num = m.group(1), m.group(2), int(m.group(3))
+    return owner, repo, num
+
+
+def add_issue_comment(issue_url: str, pat: str, body: str) -> None:
+    """
+    Add a comment to a GitHub issue using the PAT.
+    """
+    if httpx is None:
+        raise RuntimeError("httpx is required for commenting; install in venv.")
+    parsed = parse_issue_url(issue_url)
+    if not parsed:
+        raise RuntimeError(f"Could not parse issue URL: {issue_url}")
+    owner, repo, num = parsed
+    api_url = f"https://api.github.com/repos/{owner}/{repo}/issues/{num}/comments"
+    headers = {
+        "Authorization": f"Bearer {pat}",
+        "Accept": "application/vnd.github+json",
+    }
+    resp = httpx.post(api_url, headers=headers, json={"body": body}, timeout=30)
+    if resp.status_code not in (200, 201):
+        raise RuntimeError(f"Failed to comment on {issue_url}: {resp.status_code} {resp.text[:200]}")
+
+
 # ----- Main orchestration ----------------------------------------------------
 
 def main() -> int:
@@ -353,6 +386,25 @@ def main() -> int:
 
     print(json.dumps(summary, indent=2))
     print(f"Logs: {tmpdir}")
+
+    # Post summary comments into the created issues for transparency.
+    for run in summary["runs"]:
+        urls = run.get("issue_urls", [])
+        if not urls:
+            continue
+        label = run["label"]
+        body_lines = [
+            f"Automated MCP comparison run: {label}",
+            f"- Duration: {run['duration_seconds']}s",
+            f"- Tokens: prompt={run['token_prompt']}, output={run['token_output']}, tools_list={run['token_tools_list']}, total={run['token_total']}",
+            f"- Prompt: {summary['prompt']}",
+        ]
+        body = "\n".join(body_lines)
+        for issue_url in urls:
+            try:
+                add_issue_comment(issue_url, gh_pat, body)
+            except Exception as exc:
+                print(f"Warning: failed to comment on {issue_url}: {exc}", file=sys.stderr)
 
     return 0
 
