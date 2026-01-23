@@ -21,9 +21,9 @@ In standard MCP, every tool definition must be sent to the LLM as a full JSON sc
 4.  **Recursive Discovery:** Tools can be discovered through a live global search of the registry, rather than a fixed local list.
 
 ### Key Spike Findings
-Our prototype verified the following metrics:
-*   **Discovery Efficiency:** ~99.7% reduction in initial turn tokens for high-scale environments.
-*   **Economic Impact:** Estimated savings of $400 - $1,000 per month for heavy agent usage.
+Our simulation indicated the following potential:
+*   **Discovery Efficiency:** ~99.7% reduction in initial turn tokens for high-scale environments (1,000+ tools).
+*   **Economic Impact:** A projected **~87% reduction** in token costs for standard orchestration workloads.
 *   **Interoperability:** Seamless dual-protocol support (JSON + Binary) on a single transport stream.
 *   **Late-Binding Success:** Zero-code execution of remote tools via dynamic BSR reflection.
 

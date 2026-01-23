@@ -5,8 +5,8 @@ This report analyzes the token efficiency of `proto-mcp` compared to the standar
 
 ## Methodology
 We compared the context consumption of tool discovery (ListTools) using two models:
-1. **Standard MCP:** Every tool definition includes its full JSON Schema.
-2. **proto-mcp:** Tool definitions include only `name`, `description`, and a `bsr_ref`. The schema is resolved out-of-band.
+1.  **Standard MCP (Projected):** calculated based on an average JSON schema size of ~200 tokens per tool.
+2.  **proto-mcp (Measured):** Measured directly from the prototype's output, where tool definitions include only `name`, `description`, and a `bsr_ref`.
 
 Tokens were counted using the `cl100k_base` encoding (standard for GPT-4 and Claude).
 
@@ -49,4 +49,4 @@ description: Searches a massive vector database for relevant documents based on 
 For an organization running 100 tools with 10,000 requests per month:
 - **Standard MCP Cost:** ~57.50 / month (in tokens)
 - **proto-mcp Cost:** ~7.50 / month (in tokens)
-- **Net Savings:** **~70.00 / month (84% reduction)**
+- **Net Savings:** **~$50.00 / month (87% reduction)**

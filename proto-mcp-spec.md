@@ -1,4 +1,18 @@
-rotocol Definition
+# proto-mcp: Protocol Specification v1.0
+
+## Overview
+
+proto-mcp is a Protocol Buffer-based alternative to the Model Context Protocol (MCP) that provides type-safe, token-efficient tool orchestration for AI agents. This specification defines the wire format, message types, and behavior for proto-mcp implementations.
+
+## Design Principles
+
+1. **Token Efficiency**: Minimize AI context consumption through binary encoding and schema references
+2. **Type Safety**: Leverage protobuf for compile-time and runtime validation
+3. **Backward Compatibility**: Support graceful degradation to JSON-RPC when needed
+4. **Schema Evolution**: Enable versioning and breaking change management via BSR
+5. **Developer Experience**: Simple migration path from JSON-RPC MCP
+
+## Protocol Definition
 
 ### Core Messages
 
@@ -6,6 +20,8 @@ rotocol Definition
 syntax = "proto3";
 
 package buf.mcp.v1;
+
+option go_package = "github.com/buf/proto-mcp/go/mcp";
 
 import "google/protobuf/any.proto";
 import "google/protobuf/descriptor.proto";
@@ -25,21 +41,7 @@ message MCPMessage {
     CallToolRequest call_tool_request = 6;
     CallToolResponse call_tool_response = 7;
     ListResourcesRequest list_resources_request = 8;
-    ListResourc# proto-mcp: Protocol Specification v1.0
-
-## Overview
-
-proto-mcp is a Protocol Buffer-based alternative to the Model Context Protocol (MCP) that provides type-safe, token-efficient tool orchestration for AI agents. This specification defines the wire format, message types, and behavior for proto-mcp implementations.
-
-## Design Principles
-
-1. **Token Efficiency**: Minimize AI context consumption through binary encoding and schema references
-2. **Type Safety**: Leverage protobuf for compile-time and runtime validation
-3. **Backward Compatibility**: Support graceful degradation to JSON-RPC when needed
-4. **Schema Evolution**: Enable versioning and breaking change management via BSR
-5. **Developer Experience**: Simple migration path from JSON-RPC MCP
-
-## PesResponse list_resources_response = 9;
+    ListResourcesResponse list_resources_response = 9;
     ReadResourceRequest read_resource_request = 10;
     ReadResourceResponse read_resource_response = 11;
     ErrorResponse error_response = 12;
@@ -120,14 +122,17 @@ message PromptCapabilities {
 
 // Tool discovery
 message ListToolsRequest {
+  // Optional search query to filter tools by name or description
+  string query = 1;
+
   // Optional filter by BSR references
-  repeated string bsr_refs = 1;
+  repeated string bsr_refs = 2;
   
   // Include inline schema descriptors (for clients without BSR access)
-  bool include_schemas = 2;
+  bool include_schemas = 3;
   
   // Pagination cursor (for large tool catalogs)
-  string cursor = 3;
+  string cursor = 4;
 }
 
 message ListToolsResponse {
@@ -283,6 +288,15 @@ message Error {
   
   // Additional context
   map<string, string> data = 3;
+}
+
+// Service definition for network transports (gRPC)
+service MCPService {
+  rpc Initialize(InitializeRequest) returns (InitializeResponse);
+  rpc ListTools(ListToolsRequest) returns (ListToolsResponse);
+  rpc CallTool(CallToolRequest) returns (CallToolResponse);
+  rpc ListResources(ListResourcesRequest) returns (ListResourcesResponse);
+  rpc ReadResource(ReadResourceRequest) returns (ReadResourceResponse);
 }
 ```
 
@@ -854,7 +868,7 @@ call_tool_response {
 This specification is version 1.0.0.
 
 **Changelog:**
-- 2025-01-16: Initial version 1.0.0
+- 2026-01-16: Initial version 1.0.0
 
 **Future additions (backward compatible):**
 - Streaming responses (v1.1.0)

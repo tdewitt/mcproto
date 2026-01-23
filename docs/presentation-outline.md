@@ -4,7 +4,7 @@
 ---
 
 ### Slide 1: The Context Wall
-*   **Headline:** Current AI Orchestration is Hits a Wall at Scale.
+*   **Headline:** Current AI Orchestration Hits a Wall at Scale.
 *   **Visual:** A graph showing Context Usage vs. Number of Tools.
 *   **Key Point:** Standard MCP uses JSON-RPC. JSON schemas are heavy, repetitive, and expensive. 100 tools = 20k tokens.
 
@@ -18,15 +18,15 @@
 *   **Visual:** Comparison of "Explicit Setup" vs. "Dynamic Resolution."
 *   **Key Point:** The Agent fetches the blueprint from the BSR only when it needs to call the tool. No local code required.
 
-### Slide 4: Recursive Discovery (The Killer Feature)
-*   **Headline:** A Search Tool for the World's APIs.
+### Slide 4: Recursive Discovery
+*   **Headline:** Dynamic Discovery for the World's APIs.
 *   **Visual:** Demo screenshot of `search_registry` finding tools.
-*   **Key Point:** Don't tell the AI every tool you have. Give it a way to find what it needs in the global registry.
+*   **Key Point:** Decoupling discovery from declaration. Agents find what they need in a global registry on-demand.
 
-### Slide 5: The Showdown (The Proof)
+### Slide 5: Performance Benchmarks
 *   **Headline:** 99.7% Token Reduction.
 *   **Visual:** Bar chart of Legacy MCP (200k tokens) vs. proto-mcp (453 tokens).
-*   **Key Point:** We've proven this with a live Go server and Python client talking to the real Buf Registry.
+*   **Key Point:** Simulation results using a live Go server and Python client demonstrate significant efficiency gains at scale.
 
 ### Slide 6: The Future: Collaborative Spaces
 *   **Headline:** The "Global Utility Belt."
