@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/descriptorpb"
@@ -24,9 +25,11 @@ type Client struct {
 // NewClient creates a new BSR client.
 func NewClient() *Client {
 	return &Client{
-		httpClient: &http.Client{},
-		token:      os.Getenv("BUF_TOKEN"),
-		baseURL:    "https://api.buf.build",
+		httpClient: &http.Client{
+			Timeout: 30 * time.Second,
+		},
+		token:   os.Getenv("BUF_TOKEN"),
+		baseURL: "https://api.buf.build",
 	}
 }
 

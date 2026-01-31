@@ -37,7 +37,7 @@ func (s *Sniffer) Detect() (Protocol, error) {
 
 	firstByte, found := firstNonWhitespace(peek)
 	if !found {
-		return ProtocolJSON, nil
+		return ProtocolUnknown, nil
 	}
 	if hasContentLengthHeaderBytes(peek) {
 		return ProtocolJSON, nil

@@ -9,6 +9,7 @@ import (
 	"io"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/misfitdev/proto-mcp/go/mcp"
 	"github.com/misfitdev/proto-mcp/go/pkg/registry"
@@ -72,7 +73,6 @@ func NewJSONHandler(reg *registry.UnifiedRegistry, resolver schemaResolver) *JSO
 }
 
 func (h *JSONHandler) Handle(rw io.ReadWriter) error {
-	enc := json.NewEncoder(rw)
 	reader := bufio.NewReader(rw)
 
 	for {
@@ -108,7 +108,9 @@ func (h *JSONHandler) Handle(rw io.ReadWriter) error {
 				"tools": h.listTools(),
 			}
 		case "tools/call":
-			result, err := h.handleToolCall(context.Background(), req.Params)
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			result, err := h.handleToolCall(ctx, req.Params)
+			cancel()
 			if err != nil {
 				resp.Error = jsonRPCError{
 					Code:    -32603,
@@ -124,8 +126,15 @@ func (h *JSONHandler) Handle(rw io.ReadWriter) error {
 			}
 		}
 
-		if err := enc.Encode(resp); err != nil {
-			return fmt.Errorf("failed to encode JSON-RPC response: %w", err)
+		respBytes, err := json.Marshal(resp)
+		if err != nil {
+			return fmt.Errorf("failed to marshal JSON-RPC response: %w", err)
+		}
+		if _, err := rw.Write(respBytes); err != nil {
+			return fmt.Errorf("failed to write JSON-RPC response: %w", err)
+		}
+		if _, err := rw.Write([]byte("\n")); err != nil {
+			return fmt.Errorf("failed to write JSON-RPC response newline: %w", err)
 		}
 	}
 }
