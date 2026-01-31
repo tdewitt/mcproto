@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"time"
 
 	"github.com/misfitdev/proto-mcp/go/mcp"
+	"github.com/misfitdev/proto-mcp/go/pkg/config"
 	"github.com/misfitdev/proto-mcp/go/pkg/registry"
 	"github.com/misfitdev/proto-mcp/go/stdio"
 )
@@ -60,7 +60,7 @@ func (h *BinaryHandler) Handle(rw io.ReadWriter) error {
 			}
 
 		case *mcp.MCPMessage_CallToolRequest:
-			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			ctx, cancel := context.WithTimeout(context.Background(), config.DefaultToolTimeout)
 			result, err := h.registry.Call(ctx, payload.CallToolRequest.Name, payload.CallToolRequest.Arguments.Value)
 			cancel()
 

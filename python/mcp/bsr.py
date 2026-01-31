@@ -32,10 +32,13 @@ class BSRRef:
         return BSRRef(owner, repository, message, version)
 
 class BSRClient:
-    def __init__(self, token: Optional[str] = None, base_url: str = "https://api.buf.build"):
+    DEFAULT_TIMEOUT = 30  # seconds
+
+    def __init__(self, token: Optional[str] = None, base_url: str = "https://api.buf.build", timeout: int = DEFAULT_TIMEOUT):
         self.token = token or os.environ.get("BUF_TOKEN")
         self.base_url = base_url
         self.session = requests.Session()
+        self.timeout = timeout
 
     def fetch_descriptor_set(self, ref: BSRRef) -> FileDescriptorSet:
         url = f"{self.base_url}/buf.alpha.registry.v1alpha1.ImageService/GetImage"
@@ -50,7 +53,7 @@ class BSRClient:
             "reference": ref.version
         }
         
-        resp = self.session.post(url, json=payload, headers=headers)
+        resp = self.session.post(url, json=payload, headers=headers, timeout=self.timeout)
         if resp.status_code != 200:
             raise Exception(f"BSR API error ({resp.status_code}): {resp.text}")
             

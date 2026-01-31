@@ -10,9 +10,9 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/misfitdev/proto-mcp/go/mcp"
+	"github.com/misfitdev/proto-mcp/go/pkg/config"
 	"github.com/misfitdev/proto-mcp/go/pkg/registry"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
@@ -21,9 +21,6 @@ import (
 
 // toolNamePattern validates tool names to prevent injection attacks
 var toolNamePattern = regexp.MustCompile(`^[a-zA-Z0-9_-]{1,256}$`)
-
-// maxContentLength limits JSON-RPC request body size to prevent OOM attacks
-const maxContentLength = 32 * 1024 * 1024 // 32MB, matches binary handler
 
 type schemaResolver interface {
 	Resolve(ctx context.Context, refStr string) (protoreflect.MessageType, error)
@@ -116,7 +113,7 @@ func (h *JSONHandler) Handle(rw io.ReadWriter) error {
 				"tools": h.listTools(),
 			}
 		case "tools/call":
-			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			ctx, cancel := context.WithTimeout(context.Background(), config.DefaultToolTimeout)
 			result, err := h.handleToolCall(ctx, req.Params)
 			cancel()
 			if err != nil {
@@ -203,8 +200,8 @@ func readContentLengthBody(reader *bufio.Reader) ([]byte, error) {
 	if length <= 0 {
 		return nil, fmt.Errorf("invalid content-length: %d", length)
 	}
-	if int64(length) > maxContentLength {
-		return nil, fmt.Errorf("content-length %d exceeds maximum of %d", length, maxContentLength)
+	if int64(length) > config.MaxMessageSize {
+		return nil, fmt.Errorf("content-length %d exceeds maximum of %d", length, config.MaxMessageSize)
 	}
 
 	body := make([]byte, length)

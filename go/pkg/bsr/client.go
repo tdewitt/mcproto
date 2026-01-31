@@ -9,8 +9,8 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"time"
 
+	"github.com/misfitdev/proto-mcp/go/pkg/config"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/descriptorpb"
 )
@@ -26,10 +26,10 @@ type Client struct {
 func NewClient() *Client {
 	return &Client{
 		httpClient: &http.Client{
-			Timeout: 30 * time.Second,
+			Timeout: config.DefaultHTTPTimeout,
 		},
 		token:   os.Getenv("BUF_TOKEN"),
-		baseURL: "https://api.buf.build",
+		baseURL: config.DefaultBSRBaseURL,
 	}
 }
 

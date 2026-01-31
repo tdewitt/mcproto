@@ -9,6 +9,7 @@ import (
 
 	"github.com/misfitdev/proto-mcp/go/mcp"
 	"github.com/misfitdev/proto-mcp/go/pkg/bsr"
+	"github.com/misfitdev/proto-mcp/go/pkg/config"
 	"github.com/misfitdev/proto-mcp/go/pkg/github"
 	grpc_pkg "github.com/misfitdev/proto-mcp/go/pkg/grpc"
 	"github.com/misfitdev/proto-mcp/go/pkg/registry"
@@ -26,7 +27,7 @@ func (s *stdioReadWriter) Write(p []byte) (n int, err error) { return s.writer.W
 
 func main() {
 	transport := flag.String("transport", "grpc", "Transport to use (grpc or stdio)")
-	addr := flag.String("addr", ":50051", "gRPC listen address")
+	addr := flag.String("addr", config.DefaultGRPCPort, "gRPC listen address")
 	populate := flag.Bool("populate", true, "Populate the server with the ETL and Discovery mock catalogs")
 	flag.Parse()
 

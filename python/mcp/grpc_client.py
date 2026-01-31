@@ -1,9 +1,10 @@
 import grpc
 from typing import Optional, Dict
 from . import mcp_pb2, mcp_pb2_grpc
+from .config import DEFAULT_GRPC_TARGET
 
 class GRPCClient:
-    def __init__(self, target: str = "localhost:50051", use_secure: bool = False):
+    def __init__(self, target: str = DEFAULT_GRPC_TARGET, use_secure: bool = False):
         if use_secure:
             credentials = grpc.ssl_channel_credentials()
             self.channel = grpc.secure_channel(target, credentials)
