@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/descriptorpb"
@@ -21,12 +22,14 @@ type Client struct {
 	baseURL    string
 }
 
-// NewClient creates a new BSR client.
+// NewClient creates a new BSR client with sensible defaults.
 func NewClient() *Client {
 	return &Client{
-		httpClient: &http.Client{},
-		token:      os.Getenv("BUF_TOKEN"),
-		baseURL:    "https://api.buf.build",
+		httpClient: &http.Client{
+			Timeout: 30 * time.Second,
+		},
+		token:   os.Getenv("BUF_TOKEN"),
+		baseURL: "https://api.buf.build",
 	}
 }
 
@@ -51,7 +54,7 @@ func ParseRef(ref string) (*BSRRef, error) {
 
 	owner := parts[0]
 	repo := parts[1]
-	
+
 	// The rest contains message name and version
 	rest := strings.Join(parts[2:], "/")
 	messageParts := strings.Split(rest, ":")
@@ -125,256 +128,64 @@ func (c *Client) FetchDescriptorSet(ctx context.Context, ref *BSRRef) (*descript
 		fds.File = append(fds.File, fd)
 	}
 
-		return fds, nil
+	return fds, nil
+}
 
+// SearchResult represents a repository found in the registry.
+type SearchResult struct {
+	Owner      string `json:"owner"`
+	Repository string `json:"name"`
+}
+
+// Search queries the BSR for repositories matching the query.
+func (c *Client) Search(ctx context.Context, query string) ([]SearchResult, error) {
+	url := fmt.Sprintf("%s/buf.alpha.registry.v1alpha1.SearchService/Search", c.baseURL)
+
+	reqBody, err := json.Marshal(map[string]interface{}{
+		"query":    query,
+		"pageSize": 5,
+	})
+	if err != nil {
+		return nil, err
 	}
 
-	
-
-	// SearchResult represents a repository found in the registry.
-
-	
-
-	type SearchResult struct {
-
-	
-
-		Owner      string `json:"owner"`
-
-	
-
-		Repository string `json:"name"`
-
-	
-
+	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(reqBody))
+	if err != nil {
+		return nil, err
 	}
 
-	
-
-	
-
-	
-
-	// Search queries the BSR for repositories matching the query.
-
-	
-
-	func (c *Client) Search(ctx context.Context, query string) ([]SearchResult, error) {
-
-	
-
-		url := fmt.Sprintf("%s/buf.alpha.registry.v1alpha1.SearchService/Search", c.baseURL)
-
-	
-
-	
-
-	
-
-		reqBody, err := json.Marshal(map[string]interface{}{
-
-	
-
-			"query":     query,
-
-	
-
-			"pageSize":  5,
-
-	
-
-		})
-
-	
-
-		if err != nil {
-
-	
-
-			return nil, err
-
-	
-
-		}
-
-	
-
-	
-
-	
-
-		req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(reqBody))
-
-	
-
-		if err != nil {
-
-	
-
-			return nil, err
-
-	
-
-		}
-
-	
-
-	
-
-	
-
-		req.Header.Set("Content-Type", "application/json")
-
-	
-
-		if c.token != "" {
-
-	
-
-			req.Header.Set("Authorization", "Bearer "+c.token)
-
-	
-
-		}
-
-	
-
-	
-
-	
-
-		resp, err := c.httpClient.Do(req)
-
-	
-
-		if err != nil {
-
-	
-
-			return nil, err
-
-	
-
-		}
-
-	
-
-		defer resp.Body.Close()
-
-	
-
-	
-
-	
-
-		if resp.StatusCode != http.StatusOK {
-
-	
-
-			body, _ := io.ReadAll(resp.Body)
-
-	
-
-			return nil, fmt.Errorf("BSR Search API error (%d): %s", resp.StatusCode, string(body))
-
-	
-
-		}
-
-	
-
-	
-
-	
-
-		bodyBytes, _ := io.ReadAll(resp.Body)
-
-	
-
-		// fmt.Fprintf(os.Stderr, "DEBUG: BSR Search Raw Response: %s\n", string(bodyBytes))
-
-	
-
-	
-
-	
-
-		var searchResp struct {
-
-	
-
-			Results []struct {
-
-	
-
-				Repository SearchResult `json:"repository"`
-
-	
-
-			} `json:"searchResults"`
-
-	
-
-		}
-
-	
-
-	
-
-	
-
-		if err := json.Unmarshal(bodyBytes, &searchResp); err != nil {
-
-	
-
-			return nil, fmt.Errorf("failed to decode search response: %w", err)
-
-	
-
-		}
-
-	
-
-	
-
-	
-
-		results := make([]SearchResult, 0, len(searchResp.Results))
-
-	
-
-		for _, res := range searchResp.Results {
-
-	
-
-			if res.Repository.Owner != "" {
-
-	
-
-				results = append(results, res.Repository)
-
-	
-
-			}
-
-	
-
-		}
-
-	
-
-	
-
-	
-
-		return results, nil
-
-	
-
+	req.Header.Set("Content-Type", "application/json")
+	if c.token != "" {
+		req.Header.Set("Authorization", "Bearer "+c.token)
 	}
 
-	
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
 
-	
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("BSR Search API error (%d): %s", resp.StatusCode, string(body))
+	}
 
-	
+	var searchResp struct {
+		Results []struct {
+			Repository SearchResult `json:"repository"`
+		} `json:"searchResults"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&searchResp); err != nil {
+		return nil, fmt.Errorf("failed to decode search response: %w", err)
+	}
+
+	results := make([]SearchResult, 0, len(searchResp.Results))
+	for _, res := range searchResp.Results {
+		if res.Repository.Owner != "" {
+			results = append(results, res.Repository)
+		}
+	}
+
+	return results, nil
+}

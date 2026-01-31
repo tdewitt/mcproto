@@ -40,7 +40,8 @@ class Registry:
         for fd in fds.file:
             try:
                 self.pool.AddSerializedFile(fd.SerializeToString())
-            except Exception:
+            except (ValueError, TypeError) as e:
+                # Skip files that fail to add (may already exist in pool)
                 pass
 
         # 4. Return message class

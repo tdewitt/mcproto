@@ -7,8 +7,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/misfitdev/proto-mcp/go/mcp"
 	"github.com/misfitdev/proto-mcp/go/pkg/registry"
@@ -16,6 +18,12 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
+
+// toolNamePattern validates tool names to prevent injection attacks
+var toolNamePattern = regexp.MustCompile(`^[a-zA-Z0-9_-]{1,256}$`)
+
+// maxContentLength limits JSON-RPC request body size to prevent OOM attacks
+const maxContentLength = 32 * 1024 * 1024 // 32MB, matches binary handler
 
 type schemaResolver interface {
 	Resolve(ctx context.Context, refStr string) (protoreflect.MessageType, error)
@@ -108,7 +116,9 @@ func (h *JSONHandler) Handle(rw io.ReadWriter) error {
 				"tools": h.listTools(),
 			}
 		case "tools/call":
-			result, err := h.handleToolCall(context.Background(), req.Params)
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			result, err := h.handleToolCall(ctx, req.Params)
+			cancel()
 			if err != nil {
 				resp.Error = jsonRPCError{
 					Code:    -32603,
@@ -193,6 +203,9 @@ func readContentLengthBody(reader *bufio.Reader) ([]byte, error) {
 	if length <= 0 {
 		return nil, fmt.Errorf("invalid content-length: %d", length)
 	}
+	if int64(length) > maxContentLength {
+		return nil, fmt.Errorf("content-length %d exceeds maximum of %d", length, maxContentLength)
+	}
 
 	body := make([]byte, length)
 	if _, err := io.ReadFull(reader, body); err != nil {
@@ -255,6 +268,10 @@ func (h *JSONHandler) handleToolCall(ctx context.Context, rawParams json.RawMess
 	var params toolCallParams
 	if err := json.Unmarshal(rawParams, &params); err != nil {
 		return nil, fmt.Errorf("invalid tools/call params: %w", err)
+	}
+
+	if params.Name == "" {
+		return nil, fmt.Errorf("tool name is required")
 	}
 
 	switch params.Name {
@@ -343,6 +360,14 @@ func (h *JSONHandler) handleCallTool(ctx context.Context, rawArgs json.RawMessag
 	args.BsrRef = strings.TrimSpace(args.BsrRef)
 	if args.BsrRef == "" {
 		return nil, fmt.Errorf("bsr_ref is required")
+	}
+
+	// Validate tool name format if provided
+	if args.ToolName != "" {
+		args.ToolName = strings.TrimSpace(args.ToolName)
+		if !toolNamePattern.MatchString(args.ToolName) {
+			return nil, fmt.Errorf("invalid tool name format: must match [a-zA-Z0-9_-]{1,256}")
+		}
 	}
 
 	msgType, err := h.resolver.Resolve(ctx, args.BsrRef)
