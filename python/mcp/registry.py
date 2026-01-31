@@ -1,9 +1,12 @@
-from typing import Dict, Any, Type
+from typing import Dict, Any, Type, Optional
+import logging
 from google.protobuf.descriptor_pool import DescriptorPool
 from google.protobuf.message_factory import GetMessageClass
 from google.protobuf.descriptor_pb2 import FileDescriptorSet
 from .bsr import BSRClient, BSRRef
 from .config import MAX_REGISTRY_CACHE_SIZE
+
+logger = logging.getLogger(__name__)
 
 class Registry:
     def __init__(self, client: BSRClient):
@@ -26,6 +29,7 @@ class Registry:
         if repo_id not in self.cache:
             # Security: Bounded cache to prevent memory exhaustion
             if len(self.cache) >= MAX_REGISTRY_CACHE_SIZE:
+                logger.warning(f"Registry cache full ({len(self.cache)} entries), clearing")
                 self.cache.clear() # Basic eviction
 
             fds = self.client.fetch_descriptor_set(ref)
@@ -41,6 +45,7 @@ class Registry:
                 self.pool.AddSerializedFile(fd.SerializeToString())
             except (ValueError, TypeError) as e:
                 # Skip files that fail to add (may already exist in pool)
+                logger.debug(f"Skipping file descriptor {fd.name}: {e}")
                 pass
 
         # 4. Return message class
@@ -48,14 +53,17 @@ class Registry:
             descriptor = self.pool.FindMessageTypeByName(ref.message)
             return GetMessageClass(descriptor)
         except KeyError:
-            # If still not found, it might be because the name in BSR image 
+            # If still not found, it might be because the name in BSR image
             # doesn't match the ref.message exactly (e.g. leading dot).
+            # Try resolving with different name variants.
             for fd in fds.file:
                 for mt in fd.message_type:
                     full_name = f"{fd.package}.{mt.name}" if fd.package else mt.name
                     if full_name == ref.message:
                         descriptor = self.pool.FindMessageTypeByName(full_name)
+                        logger.debug(f"Resolved {ref.message} as {full_name}")
                         return GetMessageClass(descriptor)
+            logger.error(f"Message type not found in descriptor pool: {ref.message}")
             raise
 
     def unpack(self, any_msg: Any) -> Any:

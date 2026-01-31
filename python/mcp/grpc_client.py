@@ -12,6 +12,22 @@ class GRPCClient:
             self.channel = grpc.insecure_channel(target)
         self.stub = mcp_pb2_grpc.MCPServiceStub(self.channel)
 
+    def __enter__(self):
+        """Context manager entry: return self for use in 'with' statements."""
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Context manager exit: close the channel on context exit."""
+        self.close()
+        return False
+
+    def __del__(self):
+        """Destructor: ensure channel is closed when object is garbage collected."""
+        try:
+            self.close()
+        except:
+            pass
+
     def initialize(self, protocol_version: str = "1.0.0") -> mcp_pb2.InitializeResponse:
         req = mcp_pb2.InitializeRequest(
             protocol_version=protocol_version,
