@@ -103,7 +103,7 @@ func (r *UnifiedRegistry) Call(ctx context.Context, name string, args []byte) (*
 	}
 	entry, ok := r.tools[name]
 	if !ok {
-		return nil, nil // or error
+		return nil, fmt.Errorf("tool %q not found", name)
 	}
 	return entry.Handler(ctx, args)
 }
