@@ -28,11 +28,14 @@ func (r *Reader) ReadMessage() (*mcp.MCPMessage, error) {
 	length := binary.BigEndian.Uint32(lenBuf)
 
 	// Security: Limit message size to prevent OOM
+	if length == 0 {
+		return nil, fmt.Errorf("message size cannot be zero")
+	}
 	if length > MaxMessageSize {
 		return nil, fmt.Errorf("message size %d exceeds limit of %d bytes", length, MaxMessageSize)
 	}
 
-	// Read message body
+	// Read message body with bounded allocation
 	msgBuf := make([]byte, length)
 	if _, err := io.ReadFull(r.r, msgBuf); err != nil {
 		return nil, err

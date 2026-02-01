@@ -36,10 +36,10 @@ func main() {
 	if *populate {
 		reg.PopulateETLTools()
 		reg.PopulateDiscoveryTools()
-		reg.GenerateMockCatalog() // Adds the 1,000 tools for the "Boss Demo"
+		reg.GenerateMockCatalog()
 
 		if ghServer, err := github.NewServer(); err != nil {
-			fmt.Fprintf(os.Stderr, "Skipping GitHub tools: %v\n", err)
+			log.Printf("WARNING: GitHub integration unavailable (GITHUB_PERSONAL_ACCESS_TOKEN not set): %v", err)
 		} else {
 			reg.PopulateGitHubTools(ghServer)
 		}
