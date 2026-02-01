@@ -30,7 +30,7 @@ def audit_notion():
                 blocks = notion.blocks.children.list(block_id=obj["id"]).get("results")
                 for block in blocks:
                     types["block_types"].add(block.get("type"))
-            except:
+            except Exception:
                 pass
                 
     return {k: list(v) for k, v in types.items()}

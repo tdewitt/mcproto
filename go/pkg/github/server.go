@@ -156,12 +156,44 @@ func convertIssue(i *gh.Issue) *Issue {
 		Title:         i.GetTitle(),
 		Body:          proto.String(i.GetBody()),
 		User:          convertUser(i.User),
+		Assignee:      convertUser(i.Assignee),
 		Comments:      int32(i.GetComments()),
 		CreatedAt:     i.GetCreatedAt().String(),
 		UpdatedAt:     i.GetUpdatedAt().String(),
 	}
-	// TODO: Add Labels, Assignee, etc.
+	if i.ClosedAt != nil {
+		issue.ClosedAt = proto.String(i.ClosedAt.String())
+	}
+	if len(i.Labels) > 0 {
+		labels := make([]*Label, len(i.Labels))
+		for j, label := range i.Labels {
+			labels[j] = convertLabel(label)
+		}
+		issue.Labels = labels
+	}
+	if len(i.Assignees) > 0 {
+		assignees := make([]*User, len(i.Assignees))
+		for j, assignee := range i.Assignees {
+			assignees[j] = convertUser(assignee)
+		}
+		issue.Assignees = assignees
+	}
 	return issue
+}
+
+func convertLabel(l *gh.Label) *Label {
+	if l == nil {
+		return nil
+	}
+	return &Label{
+		Id:          l.GetID(),
+		NodeId:      l.GetNodeID(),
+		Url:         l.GetURL(),
+		Name:        l.GetName(),
+		Description: proto.String(l.GetDescription()),
+		Color:       l.GetColor(),
+		Default:     l.GetDefault(),
+	}
 }
 
 func (s *Server) CreateIssue(ctx context.Context, req *CreateIssueRequest) (*CreateIssueResponse, error) {

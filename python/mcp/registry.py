@@ -20,6 +20,7 @@ class Registry:
             descriptor = self.pool.FindMessageTypeByName(ref.message)
             return GetMessageClass(descriptor)
         except KeyError:
+            # Descriptor not in pool yet, fetch from BSR
             pass
 
         # 2. Fetch from BSR if not in cache
@@ -41,6 +42,7 @@ class Registry:
             try:
                 self.pool.AddSerializedFile(fd.SerializeToString())
             except Exception:
+                # File may already be in pool or have conflicting definitions; continue with next
                 pass
 
         # 4. Return message class
