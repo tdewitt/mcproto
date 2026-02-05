@@ -1,0 +1,393 @@
+syntax = "proto3";
+
+package tucker.mcproto.jira.v1;
+
+option go_package = "github.com/misfitdev/proto-mcp/go/pkg/jira";
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/wrappers.proto";
+
+// === Search ===
+
+message SearchIssuesRequest {
+  string jql = 1;                    // JQL query string
+  repeated string fields = 2;         // Fields to return (empty = all)
+  int32 start_at = 3;                // Pagination offset
+  int32 max_results = 4;             // Max results (default 50)
+  repeated string expand = 5;         // Expand options (changelog, renderedFields, etc.)
+}
+
+message SearchIssuesResponse {
+  repeated Issue issues = 1;
+  int32 start_at = 2;
+  int32 max_results = 3;
+  int32 total = 4;
+}
+
+// === Get Issue ===
+
+message GetIssueRequest {
+  string issue_key = 1;              // e.g., "PROJ-123"
+  repeated string fields = 2;
+  repeated string expand = 3;
+}
+
+message GetIssueResponse {
+  Issue issue = 1;
+}
+
+// === Create Issue ===
+
+message CreateIssueRequest {
+  string project_key = 1;            // e.g., "PROJ"
+  string issue_type = 2;             // e.g., "Bug", "Story", "Task"
+  string summary = 3;
+  string description = 4;            // Markdown or ADF JSON
+  string assignee_account_id = 5;    // Optional
+  string priority = 6;               // Optional: "Highest", "High", "Medium", "Low", "Lowest"
+  repeated string labels = 7;
+  map<string, string> custom_fields = 8;  // customfield_XXXXX -> value
+}
+
+message CreateIssueResponse {
+  string issue_key = 1;
+  string issue_id = 2;
+  string self = 3;                   // API URL
+}
+
+// === Update Issue ===
+
+message UpdateIssueRequest {
+  string issue_key = 1;
+  string summary = 2;                // Optional
+  string description = 3;            // Optional
+  string assignee_account_id = 4;    // Optional
+  string priority = 5;               // Optional
+  repeated string labels = 6;
+  map<string, string> custom_fields = 7;
+  google.protobuf.BoolValue notify_users = 8;  // Default true when unset
+}
+
+message UpdateIssueResponse {
+  bool success = 1;
+}
+
+// === Transition Issue ===
+
+message TransitionIssueRequest {
+  string issue_key = 1;
+  string transition_id = 2;          // Numeric ID from GetTransitions
+  string comment = 3;                // Optional comment with transition
+  map<string, string> fields = 4;    // Fields required by transition
+}
+
+message TransitionIssueResponse {
+  bool success = 1;
+}
+
+message GetTransitionsRequest {
+  string issue_key = 1;
+}
+
+message GetTransitionsResponse {
+  repeated Transition transitions = 1;
+}
+
+message Transition {
+  string id = 1;
+  string name = 2;
+  Status to = 3;
+}
+
+// === Comments ===
+
+message AddCommentRequest {
+  string issue_key = 1;
+  string body = 2;                   // Markdown or ADF JSON
+  Visibility visibility = 3;         // Optional restriction
+}
+
+message AddCommentResponse {
+  string comment_id = 1;
+  string self = 2;
+}
+
+message GetCommentsRequest {
+  string issue_key = 1;
+  int32 start_at = 2;
+  int32 max_results = 3;
+  string order_by = 4;               // "created" or "-created"
+}
+
+message GetCommentsResponse {
+  repeated Comment comments = 1;
+  int32 total = 2;
+}
+
+// === Assignment ===
+
+message AssignIssueRequest {
+  string issue_key = 1;
+  string account_id = 2;             // null/empty to unassign
+}
+
+message AssignIssueResponse {
+  bool success = 1;
+}
+
+// === Users ===
+
+message SearchUsersRequest {
+  string query = 1;                  // Name or email
+  int32 max_results = 2;
+}
+
+message SearchUsersResponse {
+  repeated User users = 1;
+}
+
+// === JSM (Jira Service Management) ===
+
+message GetServiceDesksRequest {
+  int32 start = 1;
+  int32 limit = 2;
+}
+
+message GetServiceDesksResponse {
+  repeated ServiceDesk service_desks = 1;
+  int32 size = 2;
+  int32 start = 3;
+  int32 limit = 4;
+  bool is_last_page = 5;
+}
+
+message ServiceDesk {
+  string id = 1;
+  string project_id = 2;
+  string project_name = 3;
+  string project_key = 4;
+}
+
+message GetRequestTypesRequest {
+  string service_desk_id = 1;
+  int32 start = 2;
+  int32 limit = 3;
+}
+
+message GetRequestTypesResponse {
+  repeated RequestType request_types = 1;
+  int32 size = 2;
+  int32 start = 3;
+  int32 limit = 4;
+  bool is_last_page = 5;
+}
+
+message RequestType {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  string help_text = 4;
+  string service_desk_id = 5;
+  repeated string group_ids = 6;
+}
+
+message CreateRequestRequest {
+  string service_desk_id = 1;
+  string request_type_id = 2;
+  map<string, string> request_field_values = 3;
+  repeated string request_participants = 4;
+  bool raise_on_behalf_of = 5;
+  string raise_on_behalf_of_account_id = 6;
+}
+
+message CreateRequestResponse {
+  string issue_id = 1;
+  string issue_key = 2;
+  string request_type_id = 3;
+  string service_desk_id = 4;
+  CustomerRequestStatus current_status = 5;
+}
+
+message GetRequestRequest {
+  string issue_id_or_key = 1;
+}
+
+message GetRequestResponse {
+  CustomerRequest request = 1;
+}
+
+message CustomerRequest {
+  string issue_id = 1;
+  string issue_key = 2;
+  string request_type_id = 3;
+  string service_desk_id = 4;
+  CustomerRequestStatus current_status = 5;
+  repeated User request_participants = 6;
+}
+
+message CustomerRequestStatus {
+  string status = 1;
+  string status_category = 2;
+  string status_date = 3;
+}
+
+message AddRequestCommentRequest {
+  string issue_id_or_key = 1;
+  string body = 2;
+  bool public = 3;
+}
+
+message AddRequestCommentResponse {
+  string id = 1;
+  string body = 2;
+  bool public = 3;
+  User author = 4;
+  string created = 5;
+}
+
+message GetOrganizationsRequest {
+  int32 start = 1;
+  int32 limit = 2;
+}
+
+message GetOrganizationsResponse {
+  repeated Organization organizations = 1;
+  int32 size = 2;
+  int32 start = 3;
+  int32 limit = 4;
+  bool is_last_page = 5;
+}
+
+message Organization {
+  string id = 1;
+  string name = 2;
+}
+
+message GetCustomersRequest {
+  string organization_id = 1;
+  int32 start = 2;
+  int32 limit = 3;
+}
+
+message GetCustomersResponse {
+  repeated User users = 1;
+  int32 size = 2;
+  int32 start = 3;
+  int32 limit = 4;
+  bool is_last_page = 5;
+}
+
+message GetSlaInfoRequest {
+  string issue_id_or_key = 1;
+}
+
+message GetSlaInfoResponse {
+  repeated SlaInfo values = 1;
+}
+
+message SlaInfo {
+  string id = 1;
+  string name = 2;
+  repeated CompletedCycle completed_cycles = 3;
+  OngoingCycle ongoing_cycle = 4;
+}
+
+message CompletedCycle {
+  string start_time = 1;
+  string stop_time = 2;
+  bool breached = 3;
+  Duration goal_duration = 4;
+  Duration elapsed_time = 5;
+  Duration remaining_time = 6;
+}
+
+message OngoingCycle {
+  string start_time = 1;
+  bool breached = 2;
+  bool paused = 3;
+  bool within_calendar_hours = 4;
+  Duration goal_duration = 5;
+  Duration elapsed_time = 6;
+  Duration remaining_time = 7;
+}
+
+message Duration {
+  int64 millis = 1;
+  string friendly = 2;
+}
+
+// === Common Types ===
+
+message Issue {
+  string id = 1;
+  string key = 2;
+  string self = 3;
+  IssueFields fields = 4;
+}
+
+message IssueFields {
+  string summary = 1;
+  string description = 2;
+  IssueType issue_type = 3;
+  Status status = 4;
+  Priority priority = 5;
+  User assignee = 6;
+  User reporter = 7;
+  Project project = 8;
+  repeated string labels = 9;
+  string created = 10;
+  string updated = 11;
+  repeated Comment comments = 12;
+  google.protobuf.Struct custom_fields = 13;
+}
+
+message IssueType {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  bool subtask = 4;
+}
+
+message Status {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  StatusCategory category = 4;
+}
+
+message StatusCategory {
+  string id = 1;
+  string key = 2;              // "new", "indeterminate", "done"
+  string name = 3;
+}
+
+message Priority {
+  string id = 1;
+  string name = 2;
+}
+
+message User {
+  string account_id = 1;
+  string display_name = 2;
+  string email_address = 3;
+  bool active = 4;
+}
+
+message Project {
+  string id = 1;
+  string key = 2;
+  string name = 3;
+}
+
+message Comment {
+  string id = 1;
+  string body = 2;
+  User author = 3;
+  string created = 4;
+  string updated = 5;
+}
+
+message Visibility {
+  string type = 1;             // "group" or "role"
+  string value = 2;            // Group name or role name
+}

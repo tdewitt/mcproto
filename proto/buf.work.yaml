@@ -4,3 +4,4 @@ directories:
   - discovery
   - github
   - mcp
+  - jira

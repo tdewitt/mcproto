@@ -11,6 +11,7 @@ import (
 	"github.com/misfitdev/proto-mcp/go/pkg/bsr"
 	"github.com/misfitdev/proto-mcp/go/pkg/github"
 	grpc_pkg "github.com/misfitdev/proto-mcp/go/pkg/grpc"
+	"github.com/misfitdev/proto-mcp/go/pkg/jira"
 	"github.com/misfitdev/proto-mcp/go/pkg/registry"
 	"github.com/misfitdev/proto-mcp/go/router"
 	"google.golang.org/grpc"
@@ -24,6 +25,23 @@ type stdioReadWriter struct {
 func (s *stdioReadWriter) Read(p []byte) (n int, err error)  { return s.reader.Read(p) }
 func (s *stdioReadWriter) Write(p []byte) (n int, err error) { return s.writer.Write(p) }
 
+func populateDefaultTools(reg *registry.UnifiedRegistry) {
+	reg.PopulateETLTools()
+	reg.PopulateDiscoveryTools()
+	reg.GenerateMockCatalog() // Adds the 1,000 tools for the "Boss Demo"
+
+	if ghServer, err := github.NewServer(); err != nil {
+		fmt.Fprintf(os.Stderr, "Skipping GitHub tools: %v\n", err)
+	} else {
+		reg.PopulateGitHubTools(ghServer)
+	}
+	if jiraClient, err := jira.NewClient(); err != nil {
+		fmt.Fprintf(os.Stderr, "Skipping Jira tools: %v\n", err)
+	} else if err := reg.PopulateJiraTools(jiraClient); err != nil {
+		fmt.Fprintf(os.Stderr, "Skipping Jira tools: %v\n", err)
+	}
+}
+
 func main() {
 	transport := flag.String("transport", "grpc", "Transport to use (grpc or stdio)")
 	addr := flag.String("addr", ":50051", "gRPC listen address")
@@ -34,15 +52,7 @@ func main() {
 	reg := registry.NewUnifiedRegistry(bsrClient)
 
 	if *populate {
-		reg.PopulateETLTools()
-		reg.PopulateDiscoveryTools()
-		reg.GenerateMockCatalog() // Adds the 1,000 tools for the "Boss Demo"
-
-		if ghServer, err := github.NewServer(); err != nil {
-			fmt.Fprintf(os.Stderr, "Skipping GitHub tools: %v\n", err)
-		} else {
-			reg.PopulateGitHubTools(ghServer)
-		}
+		populateDefaultTools(reg)
 	}
 
 	fmt.Fprintf(os.Stderr, "MC Proto Server starting... [Transport: %s]\n", *transport)

@@ -1,5 +1,7 @@
 version: v1
-name: buf.build/mcpb/mcp
+name: buf.build/mcpb/jira
+deps:
+  - buf.build/googleapis/googleapis
 breaking:
   use:
     - FILE

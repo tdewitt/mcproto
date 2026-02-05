@@ -3,7 +3,9 @@ package registry
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
+	"time"
 
 	"github.com/misfitdev/proto-mcp/go/mcp"
 	"github.com/misfitdev/proto-mcp/go/pkg/bsr"
@@ -98,6 +100,7 @@ func (r *UnifiedRegistry) List(query string) []*mcp.Tool {
 }
 
 func (r *UnifiedRegistry) Call(ctx context.Context, name string, args []byte) (*mcp.ToolResult, error) {
+	originalName := name
 	if canonical, ok := r.aliases[name]; ok {
 		name = canonical
 	}
@@ -105,7 +108,10 @@ func (r *UnifiedRegistry) Call(ctx context.Context, name string, args []byte) (*
 	if !ok {
 		return nil, nil // or error
 	}
-	return entry.Handler(ctx, args)
+	start := time.Now()
+	resp, err := entry.Handler(ctx, args)
+	log.Printf("registry.call tool=%s input_name=%s duration_ms=%d error=%t", name, originalName, time.Since(start).Milliseconds(), err != nil)
+	return resp, err
 }
 
 func (r *UnifiedRegistry) CallByBsrRef(ctx context.Context, bsrRef string, args []byte) (*mcp.ToolResult, error) {
