@@ -54,6 +54,7 @@ const commentFields = `
 type Client struct {
 	httpClient *http.Client
 	apiKey     string
+	apiURL     string // defaults to linearAPIURL, overridable for tests
 }
 
 func NewClient() (*Client, error) {
@@ -74,8 +75,12 @@ func NewClientWithConfig(apiKey string, httpClient *http.Client) (*Client, error
 	return &Client{
 		httpClient: httpClient,
 		apiKey:     apiKey,
+		apiURL:     linearAPIURL,
 	}, nil
 }
+
+// SetAPIURL overrides the API URL (used for testing).
+func (c *Client) SetAPIURL(url string) { c.apiURL = url }
 
 // ---------------------------------------------------------------------------
 // 1. ListIssues
@@ -992,7 +997,7 @@ func (c *Client) do(ctx context.Context, query string, variables map[string]any)
 		return nil, fmt.Errorf("marshal linear request: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, linearAPIURL, bytes.NewReader(payload))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.apiURL, bytes.NewReader(payload))
 	if err != nil {
 		return nil, fmt.Errorf("build linear request: %w", err)
 	}
@@ -1021,7 +1026,7 @@ func (c *Client) do(ctx context.Context, query string, variables map[string]any)
 
 		return nil, fmt.Errorf(
 			"linear POST %s failed: status=%d request_id=%s response_bytes=%d",
-			linearAPIURL,
+			c.apiURL,
 			resp.StatusCode,
 			requestID,
 			len(raw),
@@ -1044,7 +1049,11 @@ func (c *Client) do(ctx context.Context, query string, variables map[string]any)
 	if len(result.Errors) > 0 {
 		msgs := make([]string, 0, len(result.Errors))
 		for _, e := range result.Errors {
-			msgs = append(msgs, e.Message)
+			msg := strings.TrimSpace(e.Message)
+			if msg == "" {
+				msg = "(unknown error)"
+			}
+			msgs = append(msgs, msg)
 		}
 		return nil, fmt.Errorf("linear graphql errors: %s", strings.Join(msgs, "; "))
 	}
