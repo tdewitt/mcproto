@@ -1,0 +1,391 @@
+syntax = "proto3";
+
+package tucker.mcproto.linear.v1;
+
+option go_package = "github.com/misfitdev/proto-mcp/go/pkg/linear";
+
+// === Common Types ===
+
+message PageInfo {
+  bool has_next_page = 1;
+  string end_cursor = 2;
+}
+
+message Issue {
+  string id = 1;
+  string identifier = 2;           // e.g., "ENG-123"
+  string title = 3;
+  string description = 4;
+  string priority = 5;             // 0=No priority, 1=Urgent, 2=High, 3=Medium, 4=Low
+  float priority_label = 6;        // Numeric priority
+  string state_name = 7;
+  string state_id = 8;
+  string assignee_id = 9;
+  string assignee_name = 10;
+  string team_id = 11;
+  string team_name = 12;
+  string project_id = 13;
+  string project_name = 14;
+  repeated string label_ids = 15;
+  repeated string label_names = 16;
+  string cycle_id = 17;
+  string created_at = 18;
+  string updated_at = 19;
+  string url = 20;
+}
+
+message Project {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  string state = 4;               // "planned", "started", "paused", "completed", "cancelled"
+  string progress = 5;
+  string target_date = 6;
+  string start_date = 7;
+  string created_at = 8;
+  string updated_at = 9;
+  string url = 10;
+}
+
+message ProjectUpdate {
+  string id = 1;
+  string body = 2;
+  string health = 3;              // "onTrack", "atRisk", "offTrack"
+  string user_id = 4;
+  string user_name = 5;
+  string created_at = 6;
+  string url = 7;
+}
+
+message Team {
+  string id = 1;
+  string name = 2;
+  string key = 3;
+  string description = 4;
+}
+
+message Member {
+  string id = 1;
+  string name = 2;
+  string display_name = 3;
+  string email = 4;
+  bool active = 5;
+  bool admin = 6;
+}
+
+message Label {
+  string id = 1;
+  string name = 2;
+  string color = 3;
+  string parent_id = 4;
+  string team_id = 5;
+}
+
+message Cycle {
+  string id = 1;
+  string name = 2;
+  string number = 3;
+  string starts_at = 4;
+  string ends_at = 5;
+  string team_id = 6;
+  float progress = 7;
+}
+
+message Document {
+  string id = 1;
+  string title = 2;
+  string content = 3;
+  string icon = 4;
+  string color = 5;
+  string project_id = 6;
+  string created_at = 7;
+  string updated_at = 8;
+  string url = 9;
+}
+
+message WorkflowState {
+  string id = 1;
+  string name = 2;
+  string color = 3;
+  string type = 4;                // "triage", "backlog", "unstarted", "started", "completed", "cancelled"
+  float position = 5;
+  string team_id = 6;
+}
+
+message CommentEntry {
+  string id = 1;
+  string body = 2;
+  string user_id = 3;
+  string user_name = 4;
+  string created_at = 5;
+  string updated_at = 6;
+  string url = 7;
+}
+
+// === ListIssues ===
+
+message ListIssuesRequest {
+  string team_id = 1;
+  string assignee_id = 2;
+  string state_id = 3;
+  string label_id = 4;
+  string project_id = 5;
+  string cycle_id = 6;
+  int32 first = 7;                // Page size (default 50)
+  string after = 8;               // Pagination cursor
+}
+
+message ListIssuesResponse {
+  repeated Issue issues = 1;
+  PageInfo page_info = 2;
+}
+
+// === GetIssue ===
+
+message GetIssueRequest {
+  string id = 1;                  // Issue UUID or identifier (e.g., "ENG-123")
+}
+
+message GetIssueResponse {
+  Issue issue = 1;
+}
+
+// === CreateIssue ===
+
+message CreateIssueRequest {
+  string team_id = 1;
+  string title = 2;
+  string description = 3;
+  string assignee_id = 4;
+  string state_id = 5;
+  int32 priority = 6;
+  repeated string label_ids = 7;
+  string project_id = 8;
+  string cycle_id = 9;
+}
+
+message CreateIssueResponse {
+  bool success = 1;
+  Issue issue = 2;
+}
+
+// === UpdateIssue ===
+
+message UpdateIssueRequest {
+  string id = 1;
+  string title = 2;
+  string description = 3;
+  string assignee_id = 4;
+  string state_id = 5;
+  int32 priority = 6;
+  repeated string label_ids = 7;
+  string project_id = 8;
+  string cycle_id = 9;
+}
+
+message UpdateIssueResponse {
+  bool success = 1;
+  Issue issue = 2;
+}
+
+// === DeleteIssue ===
+
+message DeleteIssueRequest {
+  string id = 1;
+}
+
+message DeleteIssueResponse {
+  bool success = 1;
+}
+
+// === SearchIssues ===
+
+message SearchIssuesRequest {
+  string query = 1;
+  int32 first = 2;
+  string after = 3;
+}
+
+message SearchIssuesResponse {
+  repeated Issue issues = 1;
+  PageInfo page_info = 2;
+}
+
+// === ListProjects ===
+
+message ListProjectsRequest {
+  int32 first = 1;
+  string after = 2;
+}
+
+message ListProjectsResponse {
+  repeated Project projects = 1;
+  PageInfo page_info = 2;
+}
+
+// === GetProject ===
+
+message GetProjectRequest {
+  string id = 1;
+}
+
+message GetProjectResponse {
+  Project project = 1;
+}
+
+// === CreateProjectUpdate ===
+
+message CreateProjectUpdateRequest {
+  string project_id = 1;
+  string body = 2;
+  string health = 3;              // "onTrack", "atRisk", "offTrack"
+}
+
+message CreateProjectUpdateResponse {
+  bool success = 1;
+  ProjectUpdate project_update = 2;
+}
+
+// === ListProjectUpdates ===
+
+message ListProjectUpdatesRequest {
+  string project_id = 1;
+  int32 first = 2;
+  string after = 3;
+}
+
+message ListProjectUpdatesResponse {
+  repeated ProjectUpdate project_updates = 1;
+  PageInfo page_info = 2;
+}
+
+// === ListTeams ===
+
+message ListTeamsRequest {
+  int32 first = 1;
+  string after = 2;
+}
+
+message ListTeamsResponse {
+  repeated Team teams = 1;
+  PageInfo page_info = 2;
+}
+
+// === ListMembers ===
+
+message ListMembersRequest {
+  int32 first = 1;
+  string after = 2;
+}
+
+message ListMembersResponse {
+  repeated Member members = 1;
+  PageInfo page_info = 2;
+}
+
+// === AddComment ===
+
+message AddCommentRequest {
+  string issue_id = 1;
+  string body = 2;
+}
+
+message AddCommentResponse {
+  bool success = 1;
+  CommentEntry comment = 2;
+}
+
+// === ListComments ===
+
+message ListCommentsRequest {
+  string issue_id = 1;
+  int32 first = 2;
+  string after = 3;
+}
+
+message ListCommentsResponse {
+  repeated CommentEntry comments = 1;
+  PageInfo page_info = 2;
+}
+
+// === ListLabels ===
+
+message ListLabelsRequest {
+  string team_id = 1;            // Optional team filter
+  int32 first = 2;
+  string after = 3;
+}
+
+message ListLabelsResponse {
+  repeated Label labels = 1;
+  PageInfo page_info = 2;
+}
+
+// === ListCycles ===
+
+message ListCyclesRequest {
+  string team_id = 1;
+  int32 first = 2;
+  string after = 3;
+}
+
+message ListCyclesResponse {
+  repeated Cycle cycles = 1;
+  PageInfo page_info = 2;
+}
+
+// === ListDocuments ===
+
+message ListDocumentsRequest {
+  int32 first = 1;
+  string after = 2;
+}
+
+message ListDocumentsResponse {
+  repeated Document documents = 1;
+  PageInfo page_info = 2;
+}
+
+// === GetDocument ===
+
+message GetDocumentRequest {
+  string id = 1;
+}
+
+message GetDocumentResponse {
+  Document document = 1;
+}
+
+// === SearchDocuments ===
+
+message SearchDocumentsRequest {
+  string query = 1;
+  int32 first = 2;
+  string after = 3;
+}
+
+message SearchDocumentsResponse {
+  repeated Document documents = 1;
+  PageInfo page_info = 2;
+}
+
+// === ListWorkflowStates ===
+
+message ListWorkflowStatesRequest {
+  string team_id = 1;
+  int32 first = 2;
+  string after = 3;
+}
+
+message ListWorkflowStatesResponse {
+  repeated WorkflowState workflow_states = 1;
+  PageInfo page_info = 2;
+}
+
+// === GetViewer ===
+
+message GetViewerRequest {}
+
+message GetViewerResponse {
+  Member viewer = 1;
+}

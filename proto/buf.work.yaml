@@ -5,3 +5,5 @@ directories:
   - github
   - mcp
   - jira
+  - linear
+  - notion

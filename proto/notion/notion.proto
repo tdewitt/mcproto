@@ -1,0 +1,276 @@
+syntax = "proto3";
+
+package tucker.mcproto.notion.v1;
+
+option go_package = "github.com/misfitdev/proto-mcp/go/pkg/notion";
+
+import "google/protobuf/struct.proto";
+
+// === Common Types ===
+
+message Parent {
+  string type = 1;                // "database_id", "page_id", "workspace"
+  string database_id = 2;
+  string page_id = 3;
+}
+
+message NotionUser {
+  string id = 1;
+  string type = 2;               // "person" or "bot"
+  string name = 3;
+  string avatar_url = 4;
+  string email = 5;
+}
+
+message NotionTeam {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+}
+
+message Page {
+  string id = 1;
+  string url = 2;
+  string created_time = 3;
+  string last_edited_time = 4;
+  bool archived = 5;
+  Parent parent = 6;
+  google.protobuf.Struct properties = 7;
+  string icon = 8;
+  string cover = 9;
+}
+
+message Block {
+  string id = 1;
+  string type = 2;
+  string created_time = 3;
+  string last_edited_time = 4;
+  bool has_children = 5;
+  bool archived = 6;
+  google.protobuf.Struct data = 7;   // Type-specific block data
+}
+
+message Sort {
+  string property = 1;
+  string direction = 2;          // "ascending" or "descending"
+  string timestamp = 3;          // "created_time" or "last_edited_time"
+}
+
+message SearchResult {
+  string id = 1;
+  string object = 2;             // "page" or "database"
+  string url = 3;
+  string title = 4;
+  string parent_id = 5;
+  string last_edited_time = 6;
+}
+
+message CommentEntry {
+  string id = 1;
+  string discussion_id = 2;
+  string parent_id = 3;
+  string created_time = 4;
+  string created_by_id = 5;
+  string rich_text = 6;
+}
+
+// === Search ===
+
+message SearchRequest {
+  string query = 1;
+  string filter_object = 2;      // "page" or "database"
+  Sort sort = 3;
+  int32 page_size = 4;
+  string start_cursor = 5;
+}
+
+message SearchResponse {
+  repeated SearchResult results = 1;
+  bool has_more = 2;
+  string next_cursor = 3;
+}
+
+// === GetPage ===
+
+message GetPageRequest {
+  string page_id = 1;
+}
+
+message GetPageResponse {
+  Page page = 1;
+}
+
+// === CreatePage ===
+
+message CreatePageRequest {
+  Parent parent = 1;
+  google.protobuf.Struct properties = 2;
+  repeated google.protobuf.Struct children = 3;  // Block content
+  string icon_emoji = 4;
+  string cover_url = 5;
+}
+
+message CreatePageResponse {
+  Page page = 1;
+}
+
+// === UpdatePage ===
+
+message UpdatePageRequest {
+  string page_id = 1;
+  google.protobuf.Struct properties = 2;
+  string icon_emoji = 3;
+  string cover_url = 4;
+}
+
+message UpdatePageResponse {
+  Page page = 1;
+}
+
+// === MovePage ===
+
+message MovePageRequest {
+  string page_id = 1;
+  Parent parent = 2;
+}
+
+message MovePageResponse {
+  Page page = 1;
+}
+
+// === ArchivePage ===
+
+message ArchivePageRequest {
+  string page_id = 1;
+  bool archived = 2;             // true to archive, false to unarchive
+}
+
+message ArchivePageResponse {
+  Page page = 1;
+}
+
+// === CreateDatabase ===
+
+message CreateDatabaseRequest {
+  string parent_page_id = 1;
+  string title = 2;
+  google.protobuf.Struct properties = 3;  // Database property schema
+}
+
+message CreateDatabaseResponse {
+  string id = 1;
+  string url = 2;
+  string title = 3;
+  google.protobuf.Struct properties = 4;
+}
+
+// === QueryDatabase ===
+
+message QueryDatabaseRequest {
+  string database_id = 1;
+  google.protobuf.Struct filter = 2;
+  repeated Sort sorts = 3;
+  int32 page_size = 4;
+  string start_cursor = 5;
+}
+
+message QueryDatabaseResponse {
+  repeated Page results = 1;
+  bool has_more = 2;
+  string next_cursor = 3;
+}
+
+// === GetBlockChildren ===
+
+message GetBlockChildrenRequest {
+  string block_id = 1;
+  int32 page_size = 2;
+  string start_cursor = 3;
+}
+
+message GetBlockChildrenResponse {
+  repeated Block results = 1;
+  bool has_more = 2;
+  string next_cursor = 3;
+}
+
+// === AppendBlocks ===
+
+message AppendBlocksRequest {
+  string block_id = 1;
+  repeated google.protobuf.Struct children = 2;
+}
+
+message AppendBlocksResponse {
+  repeated Block results = 1;
+}
+
+// === CreateComment ===
+
+message CreateCommentRequest {
+  string parent_page_id = 1;
+  string discussion_id = 2;      // For threaded replies
+  string rich_text = 3;          // Plain text content
+}
+
+message CreateCommentResponse {
+  CommentEntry comment = 1;
+}
+
+// === GetComments ===
+
+message GetCommentsRequest {
+  string block_id = 1;
+  int32 page_size = 2;
+  string start_cursor = 3;
+}
+
+message GetCommentsResponse {
+  repeated CommentEntry comments = 1;
+  bool has_more = 2;
+  string next_cursor = 3;
+}
+
+// === ListUsers ===
+
+message ListUsersRequest {
+  int32 page_size = 1;
+  string start_cursor = 2;
+}
+
+message ListUsersResponse {
+  repeated NotionUser users = 1;
+  bool has_more = 2;
+  string next_cursor = 3;
+}
+
+// === GetUser ===
+
+message GetUserRequest {
+  string user_id = 1;
+}
+
+message GetUserResponse {
+  NotionUser user = 1;
+}
+
+// === GetSelf ===
+
+message GetSelfRequest {}
+
+message GetSelfResponse {
+  NotionUser user = 1;
+}
+
+// === ListTeams ===
+
+message ListTeamsRequest {
+  int32 page_size = 1;
+  string start_cursor = 2;
+}
+
+message ListTeamsResponse {
+  repeated NotionTeam teams = 1;
+  bool has_more = 2;
+  string next_cursor = 3;
+}

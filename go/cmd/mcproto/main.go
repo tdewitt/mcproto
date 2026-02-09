@@ -12,6 +12,8 @@ import (
 	"github.com/misfitdev/proto-mcp/go/pkg/github"
 	grpc_pkg "github.com/misfitdev/proto-mcp/go/pkg/grpc"
 	"github.com/misfitdev/proto-mcp/go/pkg/jira"
+	"github.com/misfitdev/proto-mcp/go/pkg/linear"
+	"github.com/misfitdev/proto-mcp/go/pkg/notion"
 	"github.com/misfitdev/proto-mcp/go/pkg/registry"
 	"github.com/misfitdev/proto-mcp/go/router"
 	"google.golang.org/grpc"
@@ -39,6 +41,18 @@ func populateDefaultTools(reg *registry.UnifiedRegistry) {
 		fmt.Fprintf(os.Stderr, "Skipping Jira tools: %v\n", err)
 	} else if err := reg.PopulateJiraTools(jiraClient); err != nil {
 		fmt.Fprintf(os.Stderr, "Skipping Jira tools: %v\n", err)
+	}
+
+	if linearClient, err := linear.NewClient(); err != nil {
+		fmt.Fprintf(os.Stderr, "Skipping Linear tools: %v\n", err)
+	} else if err := reg.PopulateLinearTools(linearClient); err != nil {
+		fmt.Fprintf(os.Stderr, "Skipping Linear tools: %v\n", err)
+	}
+
+	if notionClient, err := notion.NewClient(); err != nil {
+		fmt.Fprintf(os.Stderr, "Skipping Notion tools: %v\n", err)
+	} else if err := reg.PopulateNotionTools(notionClient); err != nil {
+		fmt.Fprintf(os.Stderr, "Skipping Notion tools: %v\n", err)
 	}
 }
 
