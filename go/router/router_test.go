@@ -45,4 +45,3 @@ func TestProtocolRouter(t *testing.T) {
 		t.Error("Binary handler was called for JSON input")
 	}
 }
-

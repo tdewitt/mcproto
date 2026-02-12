@@ -17,8 +17,8 @@ import (
 )
 
 const (
-	defaultTimeout     = 15 * time.Second
-	defaultPageSize    = 100
+	defaultTimeout       = 15 * time.Second
+	defaultPageSize      = 100
 	defaultNotionVersion = "2022-06-28"
 )
 

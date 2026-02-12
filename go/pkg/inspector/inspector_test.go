@@ -17,7 +17,7 @@ func TestInspect(t *testing.T) {
 
 	ctx := context.Background()
 
-tools, err := Inspect(ctx, os.Args[0], "-test.run=TestInspect", "NORMAL")
+	tools, err := Inspect(ctx, os.Args[0], "-test.run=TestInspect", "NORMAL")
 	if err != nil {
 		t.Fatalf("Inspect failed: %v", err)
 	}
@@ -58,7 +58,7 @@ func runMockServer() {
 	}
 	var req map[string]interface{}
 	json.Unmarshal(scanner.Bytes(), &req)
-	
+
 	resp := map[string]interface{}{
 		"jsonrpc": "2.0",
 		"id":      req["id"],
@@ -74,7 +74,7 @@ func runMockServer() {
 		return
 	}
 	json.Unmarshal(scanner.Bytes(), &req)
-	
+
 	if os.Getenv("MOCK_MODE") == "ERR" {
 		resp = map[string]interface{}{
 			"jsonrpc": "2.0",

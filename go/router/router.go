@@ -3,7 +3,9 @@ package router
 import (
 	"fmt"
 	"io"
+	"log"
 	"os"
+	"strings"
 )
 
 type Handler interface {
@@ -33,13 +35,15 @@ func (pr *ProtocolRouter) Route() error {
 		return fmt.Errorf("failed to detect protocol: %w", err)
 	}
 
-	switch p {
-	case ProtocolJSON:
-		fmt.Fprintln(os.Stderr, "DEBUG: [Server] Sniffed '{' -> Routing to JSON-RPC Handler")
-	case ProtocolBinary:
-		fmt.Fprintln(os.Stderr, "DEBUG: [Server] Sniffed binary prefix -> Routing to Protobuf Handler")
-	default:
-		fmt.Fprintln(os.Stderr, "DEBUG: [Server] Sniffed unknown format -> Routing to Unknown Handler")
+	if debugEnabled() {
+		switch p {
+		case ProtocolJSON:
+			log.Println("[Server] Sniffed '{' -> Routing to JSON-RPC Handler")
+		case ProtocolBinary:
+			log.Println("[Server] Sniffed binary prefix -> Routing to Protobuf Handler")
+		default:
+			log.Println("[Server] Sniffed unknown format -> Routing to Unknown Handler")
+		}
 	}
 
 	handler, ok := pr.handlers[p]
@@ -55,6 +59,13 @@ func (pr *ProtocolRouter) Route() error {
 	}
 
 	return handler.Handle(crw)
+}
+
+// debugEnabled returns true when the MCPROTO_DEBUG environment variable is set
+// to a truthy value ("1", "true", "yes").
+func debugEnabled() bool {
+	v := strings.ToLower(os.Getenv("MCPROTO_DEBUG"))
+	return v == "1" || v == "true" || v == "yes"
 }
 
 type combinedReadWriter struct {

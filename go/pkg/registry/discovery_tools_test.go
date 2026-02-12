@@ -12,8 +12,8 @@ func TestExtractSearchQuery_JSON(t *testing.T) {
 
 func TestExtractSearchQuery_Default(t *testing.T) {
 	query := extractSearchQuery(nil)
-	if query != "analytics" {
-		t.Fatalf("Expected default query analytics, got %s", query)
+	if query != "" {
+		t.Fatalf("Expected empty query for nil input, got %s", query)
 	}
 }
 

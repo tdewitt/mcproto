@@ -15,10 +15,12 @@ import (
 // ToolHandler is a function that executes a tool call.
 type ToolHandler func(ctx context.Context, args []byte) (*mcp.ToolResult, error)
 
-// ToolEntry represents a tool in the registry.
+// ToolEntry represents a tool in the registry with optional metadata.
 type ToolEntry struct {
-	Tool    *mcp.Tool
-	Handler ToolHandler
+	Tool     *mcp.Tool
+	Handler  ToolHandler
+	Category string   // Integration grouping: "jira", "linear", "notion", "github", "etl", "discovery", "mock"
+	Tags     []string // Additional searchable tags
 }
 
 // UnifiedRegistry is a transport-agnostic registry of tools.
@@ -38,10 +40,18 @@ func NewUnifiedRegistry(c *bsr.Client) *UnifiedRegistry {
 	}
 }
 
+// Register adds a tool with no category. Kept for backward compatibility.
 func (r *UnifiedRegistry) Register(tool *mcp.Tool, handler ToolHandler) {
+	r.RegisterWithCategory(tool, handler, "", nil)
+}
+
+// RegisterWithCategory adds a tool with an integration category and optional tags.
+func (r *UnifiedRegistry) RegisterWithCategory(tool *mcp.Tool, handler ToolHandler, category string, tags []string) {
 	r.tools[tool.Name] = ToolEntry{
-		Tool:    tool,
-		Handler: handler,
+		Tool:     tool,
+		Handler:  handler,
+		Category: category,
+		Tags:     tags,
 	}
 	if alias := snakeCaseName(tool.Name); alias != tool.Name {
 		if err := r.RegisterAlias(tool.Name, alias); err != nil {

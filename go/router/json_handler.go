@@ -165,7 +165,7 @@ func hasContentLengthHeaderReader(reader *bufio.Reader) bool {
 }
 
 func readContentLengthBody(reader *bufio.Reader) ([]byte, error) {
-	const maxContentLength = 100 * 1024 * 1024 // 100MB limit to prevent DoS
+	const maxContentLength = 10 * 1024 * 1024 // 10MB limit to prevent DoS
 
 	headers := make(map[string]string)
 	for {
@@ -321,6 +321,62 @@ func (h *JSONHandler) handleToolCall(ctx context.Context, rawParams json.RawMess
 	default:
 		return h.handleDirectToolCall(ctx, params.Name, params.Arguments)
 	}
+}
+
+// handleDirectToolCall looks up a tool in the registry by name and calls it.
+// If the tool has a BSR ref and a schema resolver is available, JSON arguments
+// are converted to protobuf bytes via the BSR schema. Otherwise the raw JSON
+// bytes are passed directly to the handler (suitable for handlers that accept JSON).
+func (h *JSONHandler) handleDirectToolCall(ctx context.Context, toolName string, rawArgs json.RawMessage) (map[string]interface{}, error) {
+	if h.registry == nil {
+		return nil, fmt.Errorf("registry is not configured")
+	}
+
+	entry, ok := h.registry.GetTool(toolName)
+	if !ok {
+		return nil, fmt.Errorf("unknown tool: %s", toolName)
+	}
+
+	bsrRef := toolBsrRef(entry.Tool)
+
+	// When a BSR ref and resolver are both available, convert JSON -> proto bytes.
+	if bsrRef != "" && h.resolver != nil {
+		msgType, err := h.resolver.Resolve(ctx, bsrRef)
+		if err != nil {
+			return nil, fmt.Errorf("failed to resolve schema for %s: %w", toolName, err)
+		}
+
+		msg := msgType.New().Interface()
+		args := rawArgs
+		if len(args) == 0 {
+			args = []byte("{}")
+		}
+		if err := protojson.Unmarshal(args, msg); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal arguments for %s: %w", toolName, err)
+		}
+
+		payload, err := proto.Marshal(msg)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal arguments for %s: %w", toolName, err)
+		}
+
+		result, err := h.registry.Call(ctx, toolName, payload)
+		if err != nil {
+			return nil, err
+		}
+		return toolResult(result), nil
+	}
+
+	// No BSR ref or no resolver: pass raw JSON bytes directly.
+	args := []byte(rawArgs)
+	if len(args) == 0 {
+		args = []byte("{}")
+	}
+	result, err := h.registry.Call(ctx, toolName, args)
+	if err != nil {
+		return nil, err
+	}
+	return toolResult(result), nil
 }
 
 func (h *JSONHandler) handleSearchRegistry(ctx context.Context, rawArgs json.RawMessage) (map[string]interface{}, error) {

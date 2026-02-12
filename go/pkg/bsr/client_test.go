@@ -7,8 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 

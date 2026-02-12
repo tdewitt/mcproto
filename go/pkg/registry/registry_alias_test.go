@@ -40,7 +40,7 @@ func TestRegisterAliasRoutesCalls(t *testing.T) {
 	}
 }
 
-func TestListUsesAliasName(t *testing.T) {
+func TestListUsesCanonicalName(t *testing.T) {
 	reg := NewUnifiedRegistry(nil)
 	tool := &mcp.Tool{
 		Name:        "CreateIssue",
@@ -57,7 +57,8 @@ func TestListUsesAliasName(t *testing.T) {
 	if len(tools) != 1 {
 		t.Fatalf("Expected 1 tool, got %d", len(tools))
 	}
-	if tools[0].Name != "create_issue" {
-		t.Fatalf("Expected alias name create_issue, got %s", tools[0].Name)
+	// After deduplication fix, List returns canonical name, not alias
+	if tools[0].Name != "CreateIssue" {
+		t.Fatalf("Expected canonical name CreateIssue, got %s", tools[0].Name)
 	}
 }

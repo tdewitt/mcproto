@@ -84,6 +84,24 @@ func (h *BinaryHandler) Handle(rw io.ReadWriter) error {
 			if err := writer.WriteMessage(resp); err != nil {
 				return fmt.Errorf("failed to write call tool response: %w", err)
 			}
+
+		default:
+			resp := &mcp.MCPMessage{
+				Id: msg.Id,
+				Payload: &mcp.MCPMessage_CallToolResponse{
+					CallToolResponse: &mcp.CallToolResponse{
+						Result: &mcp.CallToolResponse_Error{
+							Error: &mcp.Error{
+								Code:    -32601,
+								Message: fmt.Sprintf("unsupported message type: %T", payload),
+							},
+						},
+					},
+				},
+			}
+			if err := writer.WriteMessage(resp); err != nil {
+				return fmt.Errorf("failed to write error response for unknown payload: %w", err)
+			}
 		}
 	}
 }

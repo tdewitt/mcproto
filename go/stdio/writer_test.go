@@ -32,7 +32,7 @@ func TestWriteMessage(t *testing.T) {
 		t.Fatalf("Buffer too short: %d", len(data))
 	}
 	length := binary.BigEndian.Uint32(data[:4])
-	
+
 	// Verify body
 	body := data[4:]
 	if uint32(len(body)) != length {
