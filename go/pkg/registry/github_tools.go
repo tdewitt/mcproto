@@ -21,7 +21,7 @@ func (r *UnifiedRegistry) PopulateGitHubTools(s *ghpb.Server) {
 	}
 
 	// SearchRepositories
-	r.Register(&mcp.Tool{
+	r.RegisterWithCategory(&mcp.Tool{
 		Name:        "SearchRepositories",
 		Description: "Search GitHub repositories (backed by go-github).",
 		SchemaSource: &mcp.Tool_BsrRef{
@@ -48,10 +48,10 @@ func (r *UnifiedRegistry) PopulateGitHubTools(s *ghpb.Server) {
 		}
 
 		return mcpText(strings.TrimSpace(b.String())), nil
-	})
+	}, "github", []string{"github", "source-control"})
 
 	// CreateIssue
-	r.Register(&mcp.Tool{
+	r.RegisterWithCategory(&mcp.Tool{
 		Name:        "CreateIssue",
 		Description: "Create a GitHub issue in a repository (requires GITHUB_PERSONAL_ACCESS_TOKEN).",
 		SchemaSource: &mcp.Tool_BsrRef{
@@ -83,7 +83,7 @@ func (r *UnifiedRegistry) PopulateGitHubTools(s *ghpb.Server) {
 			strings.TrimSpace(issue.GetBody()),
 		)
 		return mcpText(output), nil
-	})
+	}, "github", []string{"github", "source-control"})
 }
 
 func mcpText(text string) *mcp.ToolResult {

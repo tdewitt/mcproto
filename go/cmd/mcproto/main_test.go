@@ -14,7 +14,7 @@ func TestPopulateDefaultToolsRegistersBaselineCatalog(t *testing.T) {
 	t.Setenv("JIRA_API_TOKEN", "")
 
 	reg := registry.NewUnifiedRegistry(bsr.NewClient())
-	populateDefaultTools(reg)
+	populateDefaultTools(reg, true) // include mock catalog for baseline count
 
 	tools := reg.List("")
 	if len(tools) < 1000 {

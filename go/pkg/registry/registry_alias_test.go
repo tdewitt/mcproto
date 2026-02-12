@@ -54,11 +54,19 @@ func TestListUsesCanonicalName(t *testing.T) {
 	})
 
 	tools := reg.List("")
-	if len(tools) != 1 {
-		t.Fatalf("Expected 1 tool, got %d", len(tools))
+	// List now returns both the canonical tool and alias clones.
+	// CreateIssue auto-registers alias create_issue, so we expect 2 entries.
+	if len(tools) != 2 {
+		t.Fatalf("Expected 2 tools (canonical + alias), got %d", len(tools))
 	}
-	// After deduplication fix, List returns canonical name, not alias
-	if tools[0].Name != "CreateIssue" {
-		t.Fatalf("Expected canonical name CreateIssue, got %s", tools[0].Name)
+	names := map[string]bool{}
+	for _, tool := range tools {
+		names[tool.Name] = true
+	}
+	if !names["CreateIssue"] {
+		t.Fatal("Expected canonical name CreateIssue in results")
+	}
+	if !names["create_issue"] {
+		t.Fatal("Expected alias create_issue in results")
 	}
 }

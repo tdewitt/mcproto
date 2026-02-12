@@ -24,18 +24,12 @@ func (r *UnifiedRegistry) PopulateJiraTools(client *jira.Client) error {
 		description string
 		bsrRef      string
 		handler     ToolHandler
-		metadata    map[string]string
 	}{
 		{
 			name:        "JiraSearchIssues",
 			description: "Search Jira issues using JQL. Returns matching issues with selected fields.",
 			bsrRef:      jiraBsrBase + "SearchIssuesRequest:" + jiraBsrVersion,
 			handler:     makeSearchIssuesHandler(client),
-			metadata: map[string]string{
-				"category":     "Jira",
-				"integration":  "issue-tracking",
-				"capabilities": "search,read",
-			},
 		},
 		{
 			name:        "JiraGetIssue",
@@ -136,24 +130,13 @@ func (r *UnifiedRegistry) PopulateJiraTools(client *jira.Client) error {
 	}
 
 	for _, t := range tools {
-		tool := &mcp.Tool{
+		r.RegisterWithCategory(&mcp.Tool{
 			Name:        t.name,
 			Description: t.description,
 			SchemaSource: &mcp.Tool_BsrRef{
 				BsrRef: t.bsrRef,
 			},
-		}
-		// Add metadata if present
-		if len(t.metadata) > 0 {
-			tool.Metadata = t.metadata
-		} else {
-			// Default metadata for tools without explicit metadata
-			tool.Metadata = map[string]string{
-				"category":    "Jira",
-				"integration": "issue-tracking",
-			}
-		}
-		r.Register(tool, t.handler)
+		}, t.handler, "jira", []string{"jira", "issue-tracking"})
 	}
 
 	return nil

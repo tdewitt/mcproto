@@ -22,12 +22,14 @@ type SearchCandidate struct {
 	LocalToolNames []string `json:"local_tool_names,omitempty"`
 }
 
-// PopulateDiscoveryTools adds the meta-discovery tool to the registry.
+// PopulateDiscoveryTools adds the meta-discovery tools to the registry.
 func (r *UnifiedRegistry) PopulateDiscoveryTools() {
 	const base = "buf.build/mcpb/discovery"
-	searchRef := base + "/misfit.discovery.v1.SearchRegistryRequest:main"
+	searchRef := base + "/tucker.mcproto.discovery.v1.SearchRegistryRequest:main"
+	listRef := base + "/tucker.mcproto.discovery.v1.ListToolsRequest:main"
 
-	r.Register(&mcp.Tool{
+	// search_registry - searches the remote BSR for tool blueprints.
+	r.RegisterWithCategory(&mcp.Tool{
 		Name:         "search_registry",
 		Description:  "Search for tool blueprints in the mcpb registry by keyword. Example queries: 'github', 'jira', 'linear', 'notion', 'analytics'.",
 		SchemaSource: &mcp.Tool_BsrRef{BsrRef: searchRef},
@@ -39,8 +41,10 @@ func (r *UnifiedRegistry) PopulateDiscoveryTools() {
 		}
 
 		payload, err := json.Marshal(map[string]interface{}{
-			"query":      query,
-			"candidates": candidates,
+			"query":                query,
+			"total_count":          len(candidates),
+			"categories_available": r.Categories(),
+			"candidates":           candidates,
 		})
 		if err != nil {
 			return nil, err
@@ -55,7 +59,87 @@ func (r *UnifiedRegistry) PopulateDiscoveryTools() {
 				},
 			},
 		}, nil
+	}, "discovery", []string{"discovery", "search", "meta"})
+
+	// list_tools - lists locally registered tools by category or query.
+	r.RegisterWithCategory(&mcp.Tool{
+		Name:         "list_tools",
+		Description:  "List locally registered tools. Filter by category (e.g. 'jira', 'linear', 'notion', 'github', 'etl', 'mock') or search by keyword. Returns tool names, descriptions, and categories.",
+		SchemaSource: &mcp.Tool_BsrRef{BsrRef: listRef},
+	}, func(ctx context.Context, args []byte) (*mcp.ToolResult, error) {
+		return r.handleListTools(args)
+	}, "discovery", []string{"discovery", "list", "meta"})
+}
+
+// listToolsRequest is the expected JSON input for the list_tools tool.
+type listToolsRequest struct {
+	Category string `json:"category"`
+	Query    string `json:"query"`
+}
+
+// listToolEntry is a single tool in the list_tools response.
+type listToolEntry struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Category    string `json:"category,omitempty"`
+}
+
+func (r *UnifiedRegistry) handleListTools(args []byte) (*mcp.ToolResult, error) {
+	var req listToolsRequest
+	if len(args) > 0 {
+		_ = json.Unmarshal(args, &req)
+	}
+
+	// Build the query for List(). Category filter takes precedence.
+	query := ""
+	if strings.TrimSpace(req.Category) != "" {
+		query = "category:" + strings.TrimSpace(req.Category)
+	} else if strings.TrimSpace(req.Query) != "" {
+		query = strings.TrimSpace(req.Query)
+	}
+
+	tools := r.List(query)
+
+	// Deduplicate: the caller gets canonical + alias entries, keep them all
+	// but cap the output so it stays useful.
+	const maxResults = 200
+	if len(tools) > maxResults {
+		tools = tools[:maxResults]
+	}
+
+	entries := make([]listToolEntry, 0, len(tools))
+	for _, t := range tools {
+		cat := ""
+		if entry, ok := r.GetTool(t.Name); ok {
+			cat = entry.Category
+		}
+		entries = append(entries, listToolEntry{
+			Name:        t.Name,
+			Description: t.Description,
+			Category:    cat,
+		})
+	}
+
+	payload, err := json.Marshal(map[string]interface{}{
+		"query":                query,
+		"total_count":          len(entries),
+		"categories_available": r.Categories(),
+		"counts_by_category":   r.CountByCategory(),
+		"tools":                entries,
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &mcp.ToolResult{
+		Content: []*mcp.ToolContent{
+			{
+				Content: &mcp.ToolContent_Text{
+					Text: string(payload),
+				},
+			},
+		},
+	}, nil
 }
 
 func (r *UnifiedRegistry) SearchRegistry(ctx context.Context, query string) ([]SearchCandidate, error) {
@@ -142,6 +226,8 @@ func (r *UnifiedRegistry) SearchRegistry(ctx context.Context, query string) ([]S
 	return candidates, nil
 }
 
+// extractSearchQuery parses the query string from tool arguments.
+// Accepts JSON {"query": "..."} or returns empty string if no query provided.
 func extractSearchQuery(args []byte) string {
 	if len(args) == 0 {
 		return ""
@@ -150,18 +236,12 @@ func extractSearchQuery(args []byte) string {
 	var payload struct {
 		Query string `json:"query"`
 	}
-	if args[0] == '{' {
-		if err := json.Unmarshal(args, &payload); err == nil {
-			return strings.TrimSpace(payload.Query)
-		}
+	if err := json.Unmarshal(args, &payload); err == nil {
+		return strings.TrimSpace(payload.Query)
 	}
 
-	if len(args) > 2 {
-		query := strings.TrimSpace(string(args[2:]))
-		return query
-	}
-
-	return ""
+	// Graceful fallback: treat raw bytes as a plain string query.
+	return strings.TrimSpace(string(args))
 }
 
 func (r *UnifiedRegistry) toolNamesByBsrRef() map[string][]string {

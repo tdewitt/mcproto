@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"sort"
 	"strings"
 	"time"
 
@@ -78,86 +79,148 @@ func (r *UnifiedRegistry) RegisterAlias(canonical string, alias string) error {
 	return nil
 }
 
-type toolMatch struct {
+// scoredTool holds a tool and its relevance score for sorted output.
+type scoredTool struct {
 	tool  *mcp.Tool
 	score int
 }
 
+// List returns tools matching the query string. It supports three modes:
+//
+//   - Empty query: returns all tools with a baseline score.
+//   - Category filter: queries starting with "category:" or "integration:"
+//     return only tools in that category (e.g. "category:jira").
+//   - Free text: relevance-scored search across name, aliases, tags, and description.
+//
+// Results always include the canonical tool entry. When a tool has aliases,
+// cloned entries with alias names are also included. Results are sorted by
+// relevance score descending, then alphabetically for determinism.
 func (r *UnifiedRegistry) List(query string) []*mcp.Tool {
+	query = strings.TrimSpace(query)
 	queryLower := strings.ToLower(query)
-	matches := make([]toolMatch, 0)
+
+	// Parse category/integration filter prefix.
+	var categoryFilter string
+	if strings.HasPrefix(queryLower, "category:") {
+		categoryFilter = strings.TrimSpace(queryLower[len("category:"):])
+		queryLower = ""
+	} else if strings.HasPrefix(queryLower, "integration:") {
+		categoryFilter = strings.TrimSpace(queryLower[len("integration:"):])
+		queryLower = ""
+	}
+
+	var results []scoredTool
 
 	for name, entry := range r.tools {
-		score := r.calculateRelevanceScore(name, entry.Tool.Description, queryLower)
+		// Apply category filter when present.
+		if categoryFilter != "" && strings.ToLower(entry.Category) != categoryFilter {
+			continue
+		}
 
-		// Check aliases for matches
 		aliases := r.canonicalAliases[name]
-		aliasScore := 0
-		for _, alias := range aliases {
-			if s := r.calculateRelevanceScore(alias, "", queryLower); s > aliasScore {
-				aliasScore = s
-			}
-		}
-		if aliasScore > score {
-			score = aliasScore
+		score := r.scoreMatch(name, entry, aliases, queryLower)
+
+		// Skip non-matching tools when a text query is active.
+		if score == 0 && queryLower != "" {
+			continue
 		}
 
-		// If query is empty, include all tools with base score
-		if query == "" {
+		// For empty text queries (including category-only filters), give baseline score.
+		if queryLower == "" {
 			score = 1
 		}
 
-		if score > 0 {
-			// Return tool with primary name only (not aliases)
-			// Aliases are available via metadata if needed
-			matches = append(matches, toolMatch{
-				tool:  entry.Tool,
+		// Always include the canonical tool entry.
+		results = append(results, scoredTool{tool: entry.Tool, score: score})
+
+		// Include alias copies so callers see snake_case names too.
+		for _, alias := range aliases {
+			results = append(results, scoredTool{
+				tool:  cloneToolWithName(entry.Tool, alias),
 				score: score,
 			})
 		}
 	}
 
-	// Sort by relevance score (descending)
-	for i := 0; i < len(matches)-1; i++ {
-		for j := i + 1; j < len(matches); j++ {
-			if matches[j].score > matches[i].score {
-				matches[i], matches[j] = matches[j], matches[i]
-			}
+	// Sort by score descending, then name ascending for stability.
+	sort.Slice(results, func(i, j int) bool {
+		if results[i].score != results[j].score {
+			return results[i].score > results[j].score
 		}
-	}
+		return results[i].tool.Name < results[j].tool.Name
+	})
 
-	result := make([]*mcp.Tool, len(matches))
-	for i, m := range matches {
-		result[i] = m.tool
+	out := make([]*mcp.Tool, len(results))
+	for i, s := range results {
+		out[i] = s.tool
 	}
-	return result
+	return out
 }
 
-func (r *UnifiedRegistry) calculateRelevanceScore(name, description, queryLower string) int {
+// scoreMatch computes a relevance score for a tool given a lowercase query.
+// Returns 0 when there is no match. Higher scores indicate better matches.
+//
+// Scoring tiers:
+//
+//	100 - exact name match (canonical or alias)
+//	 80 - name starts with query
+//	 60 - name contains query
+//	 40 - tag or category match
+//	 20 - description contains query
+func (r *UnifiedRegistry) scoreMatch(name string, entry ToolEntry, aliases []string, queryLower string) int {
 	if queryLower == "" {
 		return 0
 	}
 
 	nameLower := strings.ToLower(name)
-	descLower := strings.ToLower(description)
 
-	// Exact match on name
+	// Exact name match (canonical).
 	if nameLower == queryLower {
 		return 100
 	}
+	// Exact name match (alias).
+	for _, alias := range aliases {
+		if strings.ToLower(alias) == queryLower {
+			return 100
+		}
+	}
 
-	// Name starts with query
+	// Name prefix match.
+	best := 0
 	if strings.HasPrefix(nameLower, queryLower) {
-		return 80
+		best = 80
+	}
+	for _, alias := range aliases {
+		if strings.HasPrefix(strings.ToLower(alias), queryLower) && best < 80 {
+			best = 80
+		}
+	}
+	if best > 0 {
+		return best
 	}
 
-	// Name contains query
+	// Name contains match.
 	if strings.Contains(nameLower, queryLower) {
-		return 50
+		return 60
+	}
+	for _, alias := range aliases {
+		if strings.Contains(strings.ToLower(alias), queryLower) {
+			return 60
+		}
 	}
 
-	// Description contains query
-	if strings.Contains(descLower, queryLower) {
+	// Category or tag match.
+	if strings.Contains(strings.ToLower(entry.Category), queryLower) {
+		return 40
+	}
+	for _, tag := range entry.Tags {
+		if strings.Contains(strings.ToLower(tag), queryLower) {
+			return 40
+		}
+	}
+
+	// Description match.
+	if strings.Contains(strings.ToLower(entry.Tool.Description), queryLower) {
 		return 20
 	}
 
@@ -199,6 +262,38 @@ func (r *UnifiedRegistry) CallByBsrRef(ctx context.Context, bsrRef string, args 
 		}
 	}
 	return nil, fmt.Errorf("no tool found for bsr_ref %q", bsrRef)
+}
+
+// Categories returns a sorted, deduplicated list of category names present in
+// the registry. Empty-category tools are excluded.
+func (r *UnifiedRegistry) Categories() []string {
+	seen := make(map[string]bool)
+	for _, entry := range r.tools {
+		if entry.Category != "" {
+			seen[entry.Category] = true
+		}
+	}
+	cats := make([]string, 0, len(seen))
+	for c := range seen {
+		cats = append(cats, c)
+	}
+	sort.Strings(cats)
+	return cats
+}
+
+// CountByCategory returns a map of category name to the number of canonical
+// tools registered under that category. Tools with no category are counted
+// under "uncategorized".
+func (r *UnifiedRegistry) CountByCategory() map[string]int {
+	counts := make(map[string]int)
+	for _, entry := range r.tools {
+		cat := entry.Category
+		if cat == "" {
+			cat = "uncategorized"
+		}
+		counts[cat]++
+	}
+	return counts
 }
 
 func toolBsrRef(tool *mcp.Tool) string {
@@ -255,11 +350,13 @@ func snakeCaseName(name string) string {
 }
 
 // GenerateMockCatalog populates the registry with 1,000 coding-themed tools.
+// All mock tools are tagged with category "mock" so they can be filtered out
+// of real search results.
 func (r *UnifiedRegistry) GenerateMockCatalog() {
 	prefixes := []string{"git", "fs", "db", "net", "sys", "cloud", "ai", "test", "build", "deploy"}
 	verbs := []string{"read", "write", "list", "query", "exec", "sync", "scan", "analyze", "delete", "create"}
 
-	// Use GetModuleRequest as a placeholder BSR ref for all mock tools
+	// Use GetModuleRequest as a placeholder BSR ref for all mock tools.
 	toolRef := "buf.build/bufbuild/registry/buf.registry.module.v1.Module:main"
 
 	for i := 0; i < 1000; i++ {
@@ -268,7 +365,7 @@ func (r *UnifiedRegistry) GenerateMockCatalog() {
 		name := fmt.Sprintf("%s_%s_%d", prefix, verb, i)
 		desc := fmt.Sprintf("Mock tool for %s operation on %s service (Instance %d)", verb, prefix, i)
 
-		r.Register(&mcp.Tool{
+		r.RegisterWithCategory(&mcp.Tool{
 			Name:        name,
 			Description: desc,
 			SchemaSource: &mcp.Tool_BsrRef{
@@ -284,6 +381,6 @@ func (r *UnifiedRegistry) GenerateMockCatalog() {
 					},
 				},
 			}, nil
-		})
+		}, "mock", []string{"mock", "demo", prefix})
 	}
 }

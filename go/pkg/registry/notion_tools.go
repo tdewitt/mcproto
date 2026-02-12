@@ -123,13 +123,13 @@ func (r *UnifiedRegistry) PopulateNotionTools(client *notion.Client) error {
 	}
 
 	for _, t := range tools {
-		r.Register(&mcp.Tool{
+		r.RegisterWithCategory(&mcp.Tool{
 			Name:        t.name,
 			Description: t.description,
 			SchemaSource: &mcp.Tool_BsrRef{
 				BsrRef: t.bsrRef,
 			},
-		}, t.handler)
+		}, t.handler, "notion", []string{"notion", "knowledge-base"})
 	}
 
 	return nil
