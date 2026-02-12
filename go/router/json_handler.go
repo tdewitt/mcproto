@@ -165,6 +165,8 @@ func hasContentLengthHeaderReader(reader *bufio.Reader) bool {
 }
 
 func readContentLengthBody(reader *bufio.Reader) ([]byte, error) {
+	const maxContentLength = 100 * 1024 * 1024 // 100MB limit to prevent DoS
+
 	headers := make(map[string]string)
 	for {
 		line, err := reader.ReadString('\n')
@@ -193,6 +195,9 @@ func readContentLengthBody(reader *bufio.Reader) ([]byte, error) {
 	if length <= 0 {
 		return nil, fmt.Errorf("invalid content-length: %d", length)
 	}
+	if length > maxContentLength {
+		return nil, fmt.Errorf("content-length %d exceeds maximum of %d bytes", length, maxContentLength)
+	}
 
 	body := make([]byte, length)
 	if _, err := io.ReadFull(reader, body); err != nil {
@@ -202,53 +207,47 @@ func readContentLengthBody(reader *bufio.Reader) ([]byte, error) {
 }
 
 func (h *JSONHandler) listTools() []map[string]interface{} {
-	return []map[string]interface{}{
-		{
-			"name":        "search_registry",
-			"description": "Search for tool blueprints in the mcpb registry by keyword.",
-			"inputSchema": map[string]interface{}{
-				"type": "object",
-				"properties": map[string]interface{}{
-					"query": map[string]interface{}{
-						"type": "string",
-					},
-				},
-				"required": []string{"query"},
-			},
-		},
-		{
-			"name":        "resolve_schema",
-			"description": "Resolve a BSR ref into a JSON schema using on-demand descriptor fetch.",
-			"inputSchema": map[string]interface{}{
-				"type": "object",
-				"properties": map[string]interface{}{
-					"bsr_ref": map[string]interface{}{
-						"type": "string",
-					},
-				},
-				"required": []string{"bsr_ref"},
-			},
-		},
-		{
-			"name":        "call_tool",
-			"description": "Invoke a tool by BSR ref with JSON arguments.",
-			"inputSchema": map[string]interface{}{
-				"type": "object",
-				"properties": map[string]interface{}{
-					"bsr_ref": map[string]interface{}{
-						"type": "string",
-					},
-					"tool_name": map[string]interface{}{
-						"type": "string",
-					},
-					"arguments": map[string]interface{}{
-						"type": "object",
-					},
-				},
-				"required": []string{"bsr_ref"},
-			},
-		},
+	if h.registry == nil {
+		return []map[string]interface{}{}
 	}
+
+	// Get all tools from the registry
+	protoTools := h.registry.List("")
+	result := make([]map[string]interface{}, 0, len(protoTools))
+
+	for _, tool := range protoTools {
+		// Convert proto Tool to JSON format
+		toolJSON := map[string]interface{}{
+			"name":        tool.Name,
+			"description": tool.Description,
+		}
+
+		// Add BSR ref as metadata if present
+		if bsrRef := toolBsrRef(tool); bsrRef != "" {
+			toolJSON["bsr_ref"] = bsrRef
+		}
+
+		// For JSON clients, we provide a minimal schema that indicates
+		// they should use resolve_schema to get the full schema on-demand
+		toolJSON["inputSchema"] = map[string]interface{}{
+			"type": "object",
+			"description": "Use resolve_schema tool to fetch the full schema for this tool's BSR reference",
+		}
+
+		result = append(result, toolJSON)
+	}
+
+	return result
+}
+
+func toolBsrRef(tool *mcp.Tool) string {
+	if tool == nil {
+		return ""
+	}
+	if ref, ok := tool.SchemaSource.(*mcp.Tool_BsrRef); ok {
+		return ref.BsrRef
+	}
+	return ""
 }
 
 func (h *JSONHandler) handleToolCall(ctx context.Context, rawParams json.RawMessage) (map[string]interface{}, error) {

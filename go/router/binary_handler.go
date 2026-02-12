@@ -41,7 +41,9 @@ func (h *BinaryHandler) Handle(rw io.ReadWriter) error {
 					},
 				},
 			}
-			writer.WriteMessage(resp)
+			if err := writer.WriteMessage(resp); err != nil {
+				return fmt.Errorf("failed to write initialize response: %w", err)
+			}
 
 		case *mcp.MCPMessage_ListToolsRequest:
 			resp := &mcp.MCPMessage{
@@ -52,11 +54,13 @@ func (h *BinaryHandler) Handle(rw io.ReadWriter) error {
 					},
 				},
 			}
-			writer.WriteMessage(resp)
+			if err := writer.WriteMessage(resp); err != nil {
+				return fmt.Errorf("failed to write list tools response: %w", err)
+			}
 
 		case *mcp.MCPMessage_CallToolRequest:
 			result, err := h.registry.Call(context.Background(), payload.CallToolRequest.Name, payload.CallToolRequest.Arguments.Value)
-			
+
 			var responsePayload mcp.CallToolResponse
 			if err != nil {
 				responsePayload.Result = &mcp.CallToolResponse_Error{
@@ -77,7 +81,9 @@ func (h *BinaryHandler) Handle(rw io.ReadWriter) error {
 					CallToolResponse: &responsePayload,
 				},
 			}
-			writer.WriteMessage(resp)
+			if err := writer.WriteMessage(resp); err != nil {
+				return fmt.Errorf("failed to write call tool response: %w", err)
+			}
 		}
 	}
 }

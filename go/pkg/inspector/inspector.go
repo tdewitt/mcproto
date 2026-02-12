@@ -39,10 +39,13 @@ func Inspect(ctx context.Context, command string, args ...string) ([]Tool, error
 	}
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
+		stdin.Close() // Close stdin pipe on stdout pipe failure
 		return nil, err
 	}
 
 	if err := cmd.Start(); err != nil {
+		stdin.Close()
+		stdout.Close()
 		return nil, err
 	}
 	defer cmd.Process.Kill()

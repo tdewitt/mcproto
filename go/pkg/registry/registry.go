@@ -44,7 +44,9 @@ func (r *UnifiedRegistry) Register(tool *mcp.Tool, handler ToolHandler) {
 		Handler: handler,
 	}
 	if alias := snakeCaseName(tool.Name); alias != tool.Name {
-		_ = r.RegisterAlias(tool.Name, alias)
+		if err := r.RegisterAlias(tool.Name, alias); err != nil {
+			log.Printf("WARNING: Failed to register alias %q for tool %q: %v", alias, tool.Name, err)
+		}
 	}
 }
 
@@ -66,37 +68,100 @@ func (r *UnifiedRegistry) RegisterAlias(canonical string, alias string) error {
 	return nil
 }
 
-func (r *UnifiedRegistry) List(query string) []*mcp.Tool {
-	var result []*mcp.Tool
-	queryLower := strings.ToLower(query)
-	for name, entry := range r.tools {
-		matches := query == "" ||
-			strings.Contains(strings.ToLower(name), queryLower) ||
-			strings.Contains(strings.ToLower(entry.Tool.Description), queryLower)
+type toolMatch struct {
+	tool  *mcp.Tool
+	score int
+}
 
+func (r *UnifiedRegistry) List(query string) []*mcp.Tool {
+	queryLower := strings.ToLower(query)
+	matches := make([]toolMatch, 0)
+
+	for name, entry := range r.tools {
+		score := r.calculateRelevanceScore(name, entry.Tool.Description, queryLower)
+
+		// Check aliases for matches
 		aliases := r.canonicalAliases[name]
-		if !matches {
-			for _, alias := range aliases {
-				if strings.Contains(strings.ToLower(alias), queryLower) {
-					matches = true
-					break
-				}
+		aliasScore := 0
+		for _, alias := range aliases {
+			if s := r.calculateRelevanceScore(alias, "", queryLower); s > aliasScore {
+				aliasScore = s
 			}
 		}
-		if !matches {
-			continue
+		if aliasScore > score {
+			score = aliasScore
 		}
 
-		if len(aliases) == 0 {
-			result = append(result, entry.Tool)
-			continue
+		// If query is empty, include all tools with base score
+		if query == "" {
+			score = 1
 		}
 
-		for _, alias := range aliases {
-			result = append(result, cloneToolWithName(entry.Tool, alias))
+		if score > 0 {
+			// Return tool with primary name only (not aliases)
+			// Aliases are available via metadata if needed
+			matches = append(matches, toolMatch{
+				tool:  entry.Tool,
+				score: score,
+			})
 		}
 	}
+
+	// Sort by relevance score (descending)
+	for i := 0; i < len(matches)-1; i++ {
+		for j := i + 1; j < len(matches); j++ {
+			if matches[j].score > matches[i].score {
+				matches[i], matches[j] = matches[j], matches[i]
+			}
+		}
+	}
+
+	result := make([]*mcp.Tool, len(matches))
+	for i, m := range matches {
+		result[i] = m.tool
+	}
 	return result
+}
+
+func (r *UnifiedRegistry) calculateRelevanceScore(name, description, queryLower string) int {
+	if queryLower == "" {
+		return 0
+	}
+
+	nameLower := strings.ToLower(name)
+	descLower := strings.ToLower(description)
+
+	// Exact match on name
+	if nameLower == queryLower {
+		return 100
+	}
+
+	// Name starts with query
+	if strings.HasPrefix(nameLower, queryLower) {
+		return 80
+	}
+
+	// Name contains query
+	if strings.Contains(nameLower, queryLower) {
+		return 50
+	}
+
+	// Description contains query
+	if strings.Contains(descLower, queryLower) {
+		return 20
+	}
+
+	return 0
+}
+
+// GetTool looks up a tool by name, resolving aliases if necessary.
+// Returns the ToolEntry and true if found, or a zero ToolEntry and false otherwise.
+func (r *UnifiedRegistry) GetTool(name string) (ToolEntry, bool) {
+	if canonical, ok := r.aliases[name]; ok {
+		name = canonical
+	}
+	entry, ok := r.tools[name]
+	return entry, ok
 }
 
 func (r *UnifiedRegistry) Call(ctx context.Context, name string, args []byte) (*mcp.ToolResult, error) {
@@ -106,7 +171,7 @@ func (r *UnifiedRegistry) Call(ctx context.Context, name string, args []byte) (*
 	}
 	entry, ok := r.tools[name]
 	if !ok {
-		return nil, nil // or error
+		return nil, fmt.Errorf("tool %q not found", originalName)
 	}
 	start := time.Now()
 	resp, err := entry.Handler(ctx, args)
