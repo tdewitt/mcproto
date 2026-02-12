@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"strings"
+	"time"
 
 	"github.com/misfitdev/proto-mcp/go/mcp"
 	"github.com/misfitdev/proto-mcp/go/pkg/bsr"
@@ -27,7 +29,7 @@ func (r *UnifiedRegistry) PopulateDiscoveryTools() {
 
 	r.Register(&mcp.Tool{
 		Name:         "search_registry",
-		Description:  "Search for available tool blueprints in the mcpb registry by keyword.",
+		Description:  "Search for tool blueprints in the mcpb registry by keyword. Example queries: 'github', 'jira', 'linear', 'notion', 'analytics'.",
 		SchemaSource: &mcp.Tool_BsrRef{BsrRef: searchRef},
 	}, func(ctx context.Context, args []byte) (*mcp.ToolResult, error) {
 		query := extractSearchQuery(args)
@@ -57,6 +59,7 @@ func (r *UnifiedRegistry) PopulateDiscoveryTools() {
 }
 
 func (r *UnifiedRegistry) SearchRegistry(ctx context.Context, query string) ([]SearchCandidate, error) {
+	start := time.Now()
 	if r.bsrClient == nil {
 		return nil, fmt.Errorf("BSR client is not configured")
 	}
@@ -64,6 +67,7 @@ func (r *UnifiedRegistry) SearchRegistry(ctx context.Context, query string) ([]S
 	query = strings.TrimSpace(query)
 	repos, err := r.bsrClient.Search(ctx, query)
 	if err != nil {
+		log.Printf("registry.search_registry query=%q error=%v duration_ms=%d", query, err, time.Since(start).Milliseconds())
 		return nil, err
 	}
 
@@ -82,6 +86,7 @@ func (r *UnifiedRegistry) SearchRegistry(ctx context.Context, query string) ([]S
 			Owner: repo.Owner, Repository: repo.Repository, Version: "main",
 		})
 		if err != nil {
+			log.Printf("registry.search_registry query=%q repo=%s/%s fetch_error=%v", query, repo.Owner, repo.Repository, err)
 			continue
 		}
 
@@ -132,32 +137,31 @@ func (r *UnifiedRegistry) SearchRegistry(ctx context.Context, query string) ([]S
 		}
 	}
 
+	log.Printf("registry.search_registry query=%q repos_searched=%d candidates=%d duration_ms=%d",
+		query, len(repos), len(candidates), time.Since(start).Milliseconds())
 	return candidates, nil
 }
 
 func extractSearchQuery(args []byte) string {
-	const fallback = "analytics"
 	if len(args) == 0 {
-		return fallback
+		return ""
 	}
 
 	var payload struct {
 		Query string `json:"query"`
 	}
 	if args[0] == '{' {
-		if err := json.Unmarshal(args, &payload); err == nil && payload.Query != "" {
-			return payload.Query
+		if err := json.Unmarshal(args, &payload); err == nil {
+			return strings.TrimSpace(payload.Query)
 		}
 	}
 
 	if len(args) > 2 {
 		query := strings.TrimSpace(string(args[2:]))
-		if query != "" {
-			return query
-		}
+		return query
 	}
 
-	return fallback
+	return ""
 }
 
 func (r *UnifiedRegistry) toolNamesByBsrRef() map[string][]string {

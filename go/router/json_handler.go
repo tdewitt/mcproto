@@ -207,37 +207,92 @@ func readContentLengthBody(reader *bufio.Reader) ([]byte, error) {
 }
 
 func (h *JSONHandler) listTools() []map[string]interface{} {
+	// Start with meta-tools that are always available regardless of registry.
+	result := metaToolDefinitions()
+
 	if h.registry == nil {
-		return []map[string]interface{}{}
+		return result
 	}
 
-	// Get all tools from the registry
+	// Append all registered tools from the registry.
 	protoTools := h.registry.List("")
-	result := make([]map[string]interface{}, 0, len(protoTools))
-
 	for _, tool := range protoTools {
-		// Convert proto Tool to JSON format
 		toolJSON := map[string]interface{}{
 			"name":        tool.Name,
 			"description": tool.Description,
 		}
 
-		// Add BSR ref as metadata if present
 		if bsrRef := toolBsrRef(tool); bsrRef != "" {
 			toolJSON["bsr_ref"] = bsrRef
 		}
 
-		// For JSON clients, we provide a minimal schema that indicates
-		// they should use resolve_schema to get the full schema on-demand
+		// Provide a minimal inputSchema; clients can call resolve_schema
+		// for the full BSR-derived schema on demand.
 		toolJSON["inputSchema"] = map[string]interface{}{
 			"type": "object",
-			"description": "Use resolve_schema tool to fetch the full schema for this tool's BSR reference",
 		}
 
 		result = append(result, toolJSON)
 	}
 
 	return result
+}
+
+// metaToolDefinitions returns the 3 built-in meta-tools with their full
+// input schemas. These are always present regardless of what is registered.
+func metaToolDefinitions() []map[string]interface{} {
+	return []map[string]interface{}{
+		{
+			"name":        "search_registry",
+			"description": "Search for available tool blueprints in the mcpb registry by keyword.",
+			"inputSchema": map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"query": map[string]interface{}{
+						"type":        "string",
+						"description": "Keyword to search for in the registry.",
+					},
+				},
+				"required": []string{"query"},
+			},
+		},
+		{
+			"name":        "resolve_schema",
+			"description": "Resolve a BSR reference to its full JSON Schema. Use this to inspect the input format before calling a tool.",
+			"inputSchema": map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"bsr_ref": map[string]interface{}{
+						"type":        "string",
+						"description": "The BSR reference to resolve (e.g. buf.build/mcpb/jira/tucker.mcproto.jira.v1.SearchIssuesRequest:main).",
+					},
+				},
+				"required": []string{"bsr_ref"},
+			},
+		},
+		{
+			"name":        "call_tool",
+			"description": "Call a registered tool by BSR reference and/or tool name, passing JSON arguments that will be converted to protobuf.",
+			"inputSchema": map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"bsr_ref": map[string]interface{}{
+						"type":        "string",
+						"description": "The BSR reference for the tool's input message type.",
+					},
+					"tool_name": map[string]interface{}{
+						"type":        "string",
+						"description": "The registered tool name to invoke. If omitted, the tool is looked up by bsr_ref.",
+					},
+					"arguments": map[string]interface{}{
+						"type":        "object",
+						"description": "JSON arguments matching the tool's protobuf schema.",
+					},
+				},
+				"required": []string{"bsr_ref"},
+			},
+		},
+	}
 }
 
 func toolBsrRef(tool *mcp.Tool) string {
@@ -264,7 +319,7 @@ func (h *JSONHandler) handleToolCall(ctx context.Context, rawParams json.RawMess
 	case "call_tool":
 		return h.handleCallTool(ctx, params.Arguments)
 	default:
-		return nil, fmt.Errorf("unknown tool name: %s", params.Name)
+		return h.handleDirectToolCall(ctx, params.Name, params.Arguments)
 	}
 }
 
