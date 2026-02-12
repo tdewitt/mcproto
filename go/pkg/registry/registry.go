@@ -303,6 +303,9 @@ func (r *UnifiedRegistry) CallByBsrRef(ctx context.Context, bsrRef string, args 
 	if bsrRef == "" {
 		return nil, fmt.Errorf("bsr_ref is required")
 	}
+	if !strings.HasPrefix(bsrRef, "buf.build/") {
+		return nil, fmt.Errorf("invalid bsr_ref %q: must start with \"buf.build/\"", bsrRef)
+	}
 	for _, entry := range r.tools {
 		if toolBsrRef(entry.Tool) == bsrRef {
 			return entry.Handler(ctx, args)
@@ -362,6 +365,10 @@ func cloneToolWithName(tool *mcp.Tool, name string) *mcp.Tool {
 	return clone
 }
 
+// snakeCaseName converts a camelCase or PascalCase tool name to snake_case.
+// NOTE: This implementation only handles ASCII letters (A-Z, a-z). Non-ASCII
+// characters (e.g. accented letters, CJK) pass through unchanged. This is
+// acceptable because proto/tool names are ASCII-only by convention.
 func snakeCaseName(name string) string {
 	if name == "" {
 		return name

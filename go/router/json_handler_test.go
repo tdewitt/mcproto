@@ -381,6 +381,74 @@ func TestJSONHandler_ListTools_CapsAt200(t *testing.T) {
 	}
 }
 
+func TestJSONHandler_SearchRegistry_EmptyQuery(t *testing.T) {
+	reg := registry.NewUnifiedRegistry(nil)
+	handler := NewJSONHandler(reg, nil)
+
+	input := `{"jsonrpc":"2.0","id":20,"method":"tools/call","params":{"name":"search_registry","arguments":{}}}`
+	output := &bytes.Buffer{}
+
+	rw := &combinedReadWriter{
+		Reader: strings.NewReader(input),
+		Writer: output,
+	}
+
+	if err := handler.Handle(rw); err != nil {
+		t.Fatalf("Handle failed: %v", err)
+	}
+
+	var resp map[string]interface{}
+	if err := json.Unmarshal(output.Bytes(), &resp); err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
+	}
+
+	if resp["error"] == nil {
+		t.Fatal("Expected error for empty query, got nil")
+	}
+
+	errObj := resp["error"].(map[string]interface{})
+	code := int(errObj["code"].(float64))
+	if code != -32602 {
+		t.Errorf("Expected error code -32602 (Invalid params), got %d", code)
+	}
+	msg := errObj["message"].(string)
+	if !strings.Contains(msg, "query is required") {
+		t.Errorf("Expected error message to contain 'query is required', got %q", msg)
+	}
+}
+
+func TestJSONHandler_UnsupportedMethod(t *testing.T) {
+	reg := registry.NewUnifiedRegistry(nil)
+	handler := NewJSONHandler(reg, nil)
+
+	input := `{"jsonrpc":"2.0","id":21,"method":"nonexistent/method"}`
+	output := &bytes.Buffer{}
+
+	rw := &combinedReadWriter{
+		Reader: strings.NewReader(input),
+		Writer: output,
+	}
+
+	if err := handler.Handle(rw); err != nil {
+		t.Fatalf("Handle failed: %v", err)
+	}
+
+	var resp map[string]interface{}
+	if err := json.Unmarshal(output.Bytes(), &resp); err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
+	}
+
+	if resp["error"] == nil {
+		t.Fatal("Expected error for unsupported method, got nil")
+	}
+
+	errObj := resp["error"].(map[string]interface{})
+	code := int(errObj["code"].(float64))
+	if code != -32601 {
+		t.Errorf("Expected error code -32601 (Method not found), got %d", code)
+	}
+}
+
 type fakeResolver struct {
 	mt protoreflect.MessageType
 }

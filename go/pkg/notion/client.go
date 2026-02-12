@@ -1019,12 +1019,13 @@ func protoStructFromMap(m map[string]any) *structpb.Struct {
 	}
 	out, err := structpb.NewStruct(m)
 	if err != nil {
-		// CRITICAL: structpb conversion failed, likely malformed API response
-		// Operators: Set up alerting on this log pattern to detect Notion API changes
-		// This indicates data corruption and should trigger an incident
-		fmt.Fprintf(os.Stderr, "CRITICAL: notion proto conversion failed: %v (map keys: %v)\n", err, mapKeys(m))
-		// TODO: Increment metrics counter for notion_proto_conversion_failures
-		return nil
+		// CRITICAL: structpb conversion failed, likely malformed API response.
+		// Operators: Set up alerting on this log pattern to detect Notion API changes.
+		// This indicates data corruption and should trigger an incident.
+		fmt.Fprintf(os.Stderr, "ERROR: notion proto conversion failed: %v (map keys: %v)\n", err, mapKeys(m))
+		// Return an empty Struct instead of nil to prevent nil-pointer
+		// dereferences in downstream code that assumes a non-nil value.
+		return &structpb.Struct{Fields: map[string]*structpb.Value{}}
 	}
 	return out
 }

@@ -38,19 +38,19 @@ func (r *UnifiedRegistry) PopulateLinearTools(client *linear.Client) error {
 		},
 		{
 			name:        "LinearCreateIssue",
-			description: "Create a new issue in a Linear team.",
+			description: "Create a new issue in a Linear team. Use LinearListTeams to find team IDs.",
 			bsrRef:      linearBsrBase + "CreateIssueRequest:" + linearBsrVersion,
 			handler:     makeLinearCreateIssueHandler(client),
 		},
 		{
 			name:        "LinearUpdateIssue",
-			description: "Update fields on an existing Linear issue.",
+			description: "Update fields on an existing Linear issue. Use LinearGetIssue to see current values.",
 			bsrRef:      linearBsrBase + "UpdateIssueRequest:" + linearBsrVersion,
 			handler:     makeLinearUpdateIssueHandler(client),
 		},
 		{
 			name:        "LinearDeleteIssue",
-			description: "Archive/delete a Linear issue.",
+			description: "Archive a Linear issue. This action cannot be undone.",
 			bsrRef:      linearBsrBase + "DeleteIssueRequest:" + linearBsrVersion,
 			handler:     makeLinearDeleteIssueHandler(client),
 		},
@@ -74,7 +74,7 @@ func (r *UnifiedRegistry) PopulateLinearTools(client *linear.Client) error {
 		},
 		{
 			name:        "LinearCreateProjectUpdate",
-			description: "Post a status update to a Linear project.",
+			description: "Post a status update to a Linear project. Use LinearListProjects to find project IDs.",
 			bsrRef:      linearBsrBase + "CreateProjectUpdateRequest:" + linearBsrVersion,
 			handler:     makeLinearCreateProjectUpdateHandler(client),
 		},
@@ -98,7 +98,7 @@ func (r *UnifiedRegistry) PopulateLinearTools(client *linear.Client) error {
 		},
 		{
 			name:        "LinearAddComment",
-			description: "Add a comment to a Linear issue.",
+			description: "Add a comment to a Linear issue. Use LinearGetIssue to find the issue ID.",
 			bsrRef:      linearBsrBase + "AddCommentRequest:" + linearBsrVersion,
 			handler:     makeLinearAddCommentHandler(client),
 		},
@@ -116,7 +116,7 @@ func (r *UnifiedRegistry) PopulateLinearTools(client *linear.Client) error {
 		},
 		{
 			name:        "LinearListCycles",
-			description: "List cycles for a Linear team.",
+			description: "List cycles in Linear. Filter by team_id, or omit to list across all teams.",
 			bsrRef:      linearBsrBase + "ListCyclesRequest:" + linearBsrVersion,
 			handler:     makeLinearListCyclesHandler(client),
 		},
@@ -140,7 +140,7 @@ func (r *UnifiedRegistry) PopulateLinearTools(client *linear.Client) error {
 		},
 		{
 			name:        "LinearListWorkflowStates",
-			description: "List workflow states for a Linear team.",
+			description: "List workflow states in Linear. Filter by team_id, or omit for all teams.",
 			bsrRef:      linearBsrBase + "ListWorkflowStatesRequest:" + linearBsrVersion,
 			handler:     makeLinearListWorkflowStatesHandler(client),
 		},

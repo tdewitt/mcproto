@@ -37,7 +37,12 @@ func (s *Sniffer) Detect() (Protocol, error) {
 
 	firstByte, found := firstNonWhitespace(peek)
 	if !found {
-		return ProtocolJSON, nil
+		// All peeked bytes are whitespace with no actual content byte.
+		// Returning ProtocolJSON here would cause the router to hand the
+		// connection to the JSON handler which would then hang waiting for
+		// real data. Return ProtocolUnknown so the router surfaces a clear
+		// "no handler for protocol" error instead.
+		return ProtocolUnknown, nil
 	}
 	if hasContentLengthHeaderBytes(peek) {
 		return ProtocolJSON, nil

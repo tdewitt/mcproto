@@ -74,3 +74,15 @@ func TestSniffer_Empty(t *testing.T) {
 		t.Errorf("Expected ProtocolUnknown for empty input, got %v", proto)
 	}
 }
+
+func TestSniffer_WhitespaceOnly(t *testing.T) {
+	r := bytes.NewReader([]byte("   \n\t\r\n  "))
+	sniffer := NewSniffer(r)
+	proto, err := sniffer.Detect()
+	if err != nil {
+		t.Fatalf("Detect failed: %v", err)
+	}
+	if proto != ProtocolUnknown {
+		t.Errorf("Expected ProtocolUnknown for whitespace-only input, got %v", proto)
+	}
+}

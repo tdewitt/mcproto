@@ -28,9 +28,14 @@ type JSONHandler struct {
 
 type jsonRPCRequest struct {
 	JSONRPC string          `json:"jsonrpc"`
-	ID      interface{}     `json:"id"`
-	Method  string          `json:"method"`
-	Params  json.RawMessage `json:"params"`
+	// ID per JSON-RPC 2.0 spec (section 4) MUST be a string, number, or null.
+	// Using interface{} here accepts any JSON value, which means boolean or
+	// object IDs would be silently allowed. We keep interface{} for backward
+	// compatibility; adding strict validation would break existing callers
+	// that rely on the permissive behavior.
+	ID     interface{}     `json:"id"`
+	Method string          `json:"method"`
+	Params json.RawMessage `json:"params"`
 }
 
 type jsonRPCResponse struct {
@@ -44,6 +49,15 @@ type jsonRPCError struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
 }
+
+// invalidParamsError signals that a JSON-RPC request had missing or invalid
+// parameters. The Handle loop maps this to error code -32602 (Invalid params)
+// per the JSON-RPC 2.0 specification.
+type invalidParamsError struct {
+	msg string
+}
+
+func (e *invalidParamsError) Error() string { return e.msg }
 
 type toolCallParams struct {
 	Name      string          `json:"name"`
@@ -110,8 +124,13 @@ func (h *JSONHandler) Handle(rw io.ReadWriter) error {
 		case "tools/call":
 			result, err := h.handleToolCall(context.Background(), req.Params)
 			if err != nil {
+				code := -32603 // Internal error (default)
+				var ipe *invalidParamsError
+				if errors.As(err, &ipe) {
+					code = -32602 // Invalid params
+				}
 				resp.Error = jsonRPCError{
-					Code:    -32603,
+					Code:    code,
 					Message: err.Error(),
 				}
 			} else {
@@ -320,7 +339,7 @@ func toolBsrRef(tool *mcp.Tool) string {
 func (h *JSONHandler) handleToolCall(ctx context.Context, rawParams json.RawMessage) (map[string]interface{}, error) {
 	var params toolCallParams
 	if err := json.Unmarshal(rawParams, &params); err != nil {
-		return nil, fmt.Errorf("invalid tools/call params: %w", err)
+		return nil, &invalidParamsError{msg: fmt.Sprintf("invalid tools/call params: %v", err)}
 	}
 
 	switch params.Name {
@@ -399,12 +418,12 @@ func (h *JSONHandler) handleSearchRegistry(ctx context.Context, rawArgs json.Raw
 	var args searchRegistryArgs
 	if len(rawArgs) > 0 {
 		if err := json.Unmarshal(rawArgs, &args); err != nil {
-			return nil, fmt.Errorf("invalid search_registry args: %w", err)
+			return nil, &invalidParamsError{msg: fmt.Sprintf("invalid search_registry args: %v", err)}
 		}
 	}
 	query := strings.TrimSpace(args.Query)
 	if query == "" {
-		query = "analytics"
+		return nil, &invalidParamsError{msg: "query is required"}
 	}
 
 	candidates, err := h.registry.SearchRegistry(ctx, query)
@@ -430,10 +449,10 @@ func (h *JSONHandler) handleResolveSchema(ctx context.Context, rawArgs json.RawM
 
 	var args resolveSchemaArgs
 	if err := json.Unmarshal(rawArgs, &args); err != nil {
-		return nil, fmt.Errorf("invalid resolve_schema args: %w", err)
+		return nil, &invalidParamsError{msg: fmt.Sprintf("invalid resolve_schema args: %v", err)}
 	}
 	if strings.TrimSpace(args.BsrRef) == "" {
-		return nil, fmt.Errorf("bsr_ref is required")
+		return nil, &invalidParamsError{msg: "bsr_ref is required"}
 	}
 
 	msgType, err := h.resolver.Resolve(ctx, args.BsrRef)
@@ -460,11 +479,11 @@ func (h *JSONHandler) handleCallTool(ctx context.Context, rawArgs json.RawMessag
 
 	var args callToolArgs
 	if err := json.Unmarshal(rawArgs, &args); err != nil {
-		return nil, fmt.Errorf("invalid call_tool args: %w", err)
+		return nil, &invalidParamsError{msg: fmt.Sprintf("invalid call_tool args: %v", err)}
 	}
 	args.BsrRef = strings.TrimSpace(args.BsrRef)
 	if args.BsrRef == "" {
-		return nil, fmt.Errorf("bsr_ref is required")
+		return nil, &invalidParamsError{msg: "bsr_ref is required"}
 	}
 
 	msgType, err := h.resolver.Resolve(ctx, args.BsrRef)

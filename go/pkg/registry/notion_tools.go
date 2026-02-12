@@ -38,7 +38,7 @@ func (r *UnifiedRegistry) PopulateNotionTools(client *notion.Client) error {
 		},
 		{
 			name:        "NotionCreatePage",
-			description: "Create a new page in a Notion parent page or database.",
+			description: "Create a new page in a Notion parent page or database. Use NotionSearch to find parent IDs.",
 			bsrRef:      notionBsrBase + "CreatePageRequest:" + notionBsrVersion,
 			handler:     makeNotionCreatePageHandler(client),
 		},
@@ -50,7 +50,7 @@ func (r *UnifiedRegistry) PopulateNotionTools(client *notion.Client) error {
 		},
 		{
 			name:        "NotionMovePage",
-			description: "Move a Notion page to a different parent.",
+			description: "Move a Notion page to a different parent. Use NotionGetPage to verify both source and destination pages exist.",
 			bsrRef:      notionBsrBase + "MovePageRequest:" + notionBsrVersion,
 			handler:     makeNotionMovePageHandler(client),
 		},
@@ -68,7 +68,7 @@ func (r *UnifiedRegistry) PopulateNotionTools(client *notion.Client) error {
 		},
 		{
 			name:        "NotionQueryDatabase",
-			description: "Query a Notion database with filters and sorts.",
+			description: "Query a Notion database with filters and sorts. Use NotionSearch to find database IDs.",
 			bsrRef:      notionBsrBase + "QueryDatabaseRequest:" + notionBsrVersion,
 			handler:     makeNotionQueryDatabaseHandler(client),
 		},
@@ -80,13 +80,13 @@ func (r *UnifiedRegistry) PopulateNotionTools(client *notion.Client) error {
 		},
 		{
 			name:        "NotionAppendBlocks",
-			description: "Append child blocks to a Notion page or block.",
+			description: "Append child blocks to a Notion page or block. Use NotionGetBlockChildren to inspect existing blocks.",
 			bsrRef:      notionBsrBase + "AppendBlocksRequest:" + notionBsrVersion,
 			handler:     makeNotionAppendBlocksHandler(client),
 		},
 		{
 			name:        "NotionCreateComment",
-			description: "Create a comment on a Notion page.",
+			description: "Create a comment on a Notion page. Requires parent_page_id or discussion_id, plus rich_text content.",
 			bsrRef:      notionBsrBase + "CreateCommentRequest:" + notionBsrVersion,
 			handler:     makeNotionCreateCommentHandler(client),
 		},

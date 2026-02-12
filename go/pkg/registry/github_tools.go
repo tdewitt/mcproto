@@ -23,7 +23,7 @@ func (r *UnifiedRegistry) PopulateGitHubTools(s *ghpb.Server) {
 	// SearchRepositories
 	r.RegisterWithCategory(&mcp.Tool{
 		Name:        "SearchRepositories",
-		Description: "Search GitHub repositories (backed by go-github).",
+		Description: "Search GitHub repositories. Returns up to 5 results. Use Go-style query syntax (e.g., 'language:go stars:>100').",
 		SchemaSource: &mcp.Tool_BsrRef{
 			BsrRef: githubBsrBase + "SearchRepositoriesRequest:" + githubBsrVersion,
 		},
@@ -53,7 +53,7 @@ func (r *UnifiedRegistry) PopulateGitHubTools(s *ghpb.Server) {
 	// CreateIssue
 	r.RegisterWithCategory(&mcp.Tool{
 		Name:        "CreateIssue",
-		Description: "Create a GitHub issue in a repository (requires GITHUB_PERSONAL_ACCESS_TOKEN).",
+		Description: "Create a GitHub issue in a repository. Requires owner, repo, and title. Auto-generates title if empty.",
 		SchemaSource: &mcp.Tool_BsrRef{
 			BsrRef: githubBsrBase + "CreateIssueRequest:" + githubBsrVersion,
 		},
@@ -88,7 +88,7 @@ func (r *UnifiedRegistry) PopulateGitHubTools(s *ghpb.Server) {
 	// ListIssues
 	r.RegisterWithCategory(&mcp.Tool{
 		Name:        "ListIssues",
-		Description: "List issues in a GitHub repository with optional filtering by state, sort, and direction.",
+		Description: "List issues in a GitHub repository. Filter by state ('open', 'closed', 'all'). Returns issues for owner/repo.",
 		SchemaSource: &mcp.Tool_BsrRef{
 			BsrRef: githubBsrBase + "ListIssuesRequest:" + githubBsrVersion,
 		},
@@ -123,7 +123,7 @@ func (r *UnifiedRegistry) PopulateGitHubTools(s *ghpb.Server) {
 	// CreateOrUpdateFile
 	r.RegisterWithCategory(&mcp.Tool{
 		Name:        "CreateOrUpdateFile",
-		Description: "Create or update a file in a GitHub repository. Provide sha to update an existing file.",
+		Description: "Create or update a file in a GitHub repository. Provide sha to update existing file, omit for new file creation.",
 		SchemaSource: &mcp.Tool_BsrRef{
 			BsrRef: githubBsrBase + "CreateOrUpdateFileRequest:" + githubBsrVersion,
 		},

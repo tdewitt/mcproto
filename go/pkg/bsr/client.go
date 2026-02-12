@@ -30,10 +30,17 @@ const defaultHTTPTimeout = 30 * time.Second
 // and Search when the caller does not supply a deadline.
 const defaultFetchTimeout = 60 * time.Second
 
-// NewClient creates a new BSR client.
+// NewClient creates a new BSR client with the default HTTP timeout.
 func NewClient() *Client {
+	return NewClientWithTimeout(defaultHTTPTimeout)
+}
+
+// NewClientWithTimeout creates a new BSR client with a custom HTTP timeout.
+// Use this when the default 30s timeout is not suitable (e.g., large descriptor
+// sets that take longer to fetch, or tighter timeouts in latency-sensitive paths).
+func NewClientWithTimeout(timeout time.Duration) *Client {
 	return &Client{
-		httpClient: &http.Client{Timeout: defaultHTTPTimeout},
+		httpClient: &http.Client{Timeout: timeout},
 		token:      os.Getenv("BUF_TOKEN"),
 		baseURL:    "https://api.buf.build",
 	}

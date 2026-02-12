@@ -27,7 +27,7 @@ func (r *UnifiedRegistry) PopulateJiraTools(client *jira.Client) error {
 	}{
 		{
 			name:        "JiraSearchIssues",
-			description: "Search Jira issues using JQL. Returns matching issues with selected fields.",
+			description: "Search Jira issues using JQL. Use JQL syntax (e.g., 'project = PROJ AND status = Open').",
 			bsrRef:      jiraBsrBase + "SearchIssuesRequest:" + jiraBsrVersion,
 			handler:     makeSearchIssuesHandler(client),
 		},
@@ -39,19 +39,19 @@ func (r *UnifiedRegistry) PopulateJiraTools(client *jira.Client) error {
 		},
 		{
 			name:        "JiraCreateIssue",
-			description: "Create a new Jira issue in a project with specified type, summary, and fields.",
+			description: "Create a new Jira issue. Requires project_key, issue_type, and summary. Use JiraSearchIssues to verify the project key.",
 			bsrRef:      jiraBsrBase + "CreateIssueRequest:" + jiraBsrVersion,
 			handler:     makeCreateIssueHandler(client),
 		},
 		{
 			name:        "JiraUpdateIssue",
-			description: "Update fields on an existing Jira issue.",
+			description: "Update fields on an existing Jira issue. Use JiraGetIssue first to see current field values.",
 			bsrRef:      jiraBsrBase + "UpdateIssueRequest:" + jiraBsrVersion,
 			handler:     makeUpdateIssueHandler(client),
 		},
 		{
 			name:        "JiraTransitionIssue",
-			description: "Transition a Jira issue to a new status. Use GetTransitions first to get available transition IDs.",
+			description: "Transition a Jira issue to a new status. Use JiraGetTransitions first to get available transition IDs.",
 			bsrRef:      jiraBsrBase + "TransitionIssueRequest:" + jiraBsrVersion,
 			handler:     makeTransitionIssueHandler(client),
 		},
@@ -63,13 +63,13 @@ func (r *UnifiedRegistry) PopulateJiraTools(client *jira.Client) error {
 		},
 		{
 			name:        "JiraAssignIssue",
-			description: "Assign a Jira issue to a user by account ID. Use SearchUsers to find account IDs.",
+			description: "Assign a Jira issue to a user by account ID. Use JiraSearchUsers to find account IDs.",
 			bsrRef:      jiraBsrBase + "AssignIssueRequest:" + jiraBsrVersion,
 			handler:     makeAssignIssueHandler(client),
 		},
 		{
 			name:        "JiraGetTransitions",
-			description: "Get available status transitions for an issue. Returns transition IDs needed for TransitionIssue.",
+			description: "Get available status transitions for an issue. Returns transition IDs needed for JiraTransitionIssue.",
 			bsrRef:      jiraBsrBase + "GetTransitionsRequest:" + jiraBsrVersion,
 			handler:     makeGetTransitionsHandler(client),
 		},
@@ -81,49 +81,49 @@ func (r *UnifiedRegistry) PopulateJiraTools(client *jira.Client) error {
 		},
 		{
 			name:        "JsmGetServiceDesks",
-			description: "List Jira Service Management service desks visible to the authenticated user.",
+			description: "List Jira Service Management service desks visible to the authenticated user. Requires Jira Service Management.",
 			bsrRef:      jiraBsrBase + "GetServiceDesksRequest:" + jiraBsrVersion,
 			handler:     makeGetServiceDesksHandler(client),
 		},
 		{
 			name:        "JsmGetRequestTypes",
-			description: "List request types for a service desk in Jira Service Management.",
+			description: "List request types for a service desk. Use JsmGetServiceDesks to find desk IDs.",
 			bsrRef:      jiraBsrBase + "GetRequestTypesRequest:" + jiraBsrVersion,
 			handler:     makeGetRequestTypesHandler(client),
 		},
 		{
 			name:        "JsmCreateRequest",
-			description: "Create a new Jira Service Management customer request.",
+			description: "Create a new Jira Service Management customer request. Use JsmGetServiceDesks and JsmGetRequestTypes to find required IDs.",
 			bsrRef:      jiraBsrBase + "CreateRequestRequest:" + jiraBsrVersion,
 			handler:     makeCreateRequestHandler(client),
 		},
 		{
 			name:        "JsmGetRequest",
-			description: "Get Jira Service Management request details by issue ID or key.",
+			description: "Get Jira Service Management request details by issue ID or key. Requires Jira Service Management.",
 			bsrRef:      jiraBsrBase + "GetRequestRequest:" + jiraBsrVersion,
 			handler:     makeGetRequestHandler(client),
 		},
 		{
 			name:        "JsmAddRequestComment",
-			description: "Add a Jira Service Management request comment with public/internal visibility.",
+			description: "Add a comment to a JSM request with public/internal visibility. Requires Jira Service Management.",
 			bsrRef:      jiraBsrBase + "AddRequestCommentRequest:" + jiraBsrVersion,
 			handler:     makeAddRequestCommentHandler(client),
 		},
 		{
 			name:        "JsmGetOrganizations",
-			description: "List Jira Service Management organizations.",
+			description: "List Jira Service Management organizations. Requires Jira Service Management.",
 			bsrRef:      jiraBsrBase + "GetOrganizationsRequest:" + jiraBsrVersion,
 			handler:     makeGetOrganizationsHandler(client),
 		},
 		{
 			name:        "JsmGetCustomers",
-			description: "List customers in a Jira Service Management organization.",
+			description: "List customers in a JSM organization. Use JsmGetOrganizations to find organization IDs.",
 			bsrRef:      jiraBsrBase + "GetCustomersRequest:" + jiraBsrVersion,
 			handler:     makeGetCustomersHandler(client),
 		},
 		{
 			name:        "JsmGetSlaInfo",
-			description: "Get SLA information for a Jira Service Management request.",
+			description: "Get SLA information for a Jira Service Management request. Requires Jira Service Management.",
 			bsrRef:      jiraBsrBase + "GetSlaInfoRequest:" + jiraBsrVersion,
 			handler:     makeGetSlaInfoHandler(client),
 		},
@@ -465,10 +465,21 @@ func makeGetSlaInfoHandler(client *jira.Client) ToolHandler {
 	}
 }
 
+// maxToolJSONSize is the maximum size of a marshalled tool response (1 MB).
+// Responses exceeding this limit are truncated to prevent memory exhaustion
+// from unexpectedly large payloads (e.g., circular references via Any types,
+// or API responses that embed large blobs).
+const maxToolJSONSize = 1 * 1024 * 1024
+
 func toolJSON(v any) (*mcp.ToolResult, error) {
 	b, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {
 		return nil, fmt.Errorf("marshal tool response: %w", err)
+	}
+	if len(b) > maxToolJSONSize {
+		truncated := string(b[:maxToolJSONSize])
+		truncated += fmt.Sprintf("\n\n... [TRUNCATED: response was %d bytes, limit is %d bytes]", len(b), maxToolJSONSize)
+		return mcpText(truncated), nil
 	}
 	return mcpText(string(b)), nil
 }

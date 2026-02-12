@@ -14,11 +14,19 @@ import (
 
 const bsrOwnerFilter = "mcpb"
 
+// maxMatchesPerRepo caps the number of candidate messages extracted from a
+// single BSR repository during search. This prevents a single large proto
+// package from dominating results and keeps response sizes reasonable for
+// AI clients that consume the output in their context window.
+const maxMatchesPerRepo = 8
+
 type SearchCandidate struct {
 	Owner          string   `json:"owner"`
 	Repository     string   `json:"repository"`
 	Message        string   `json:"message"`
+	Description    string   `json:"description"`
 	BsrRef         string   `json:"bsr_ref"`
+	Callable       bool     `json:"callable"`
 	LocalToolNames []string `json:"local_tool_names,omitempty"`
 }
 
@@ -155,8 +163,6 @@ func (r *UnifiedRegistry) SearchRegistry(ctx context.Context, query string) ([]S
 	candidates := make([]SearchCandidate, 0, len(repos))
 	seen := make(map[string]bool)
 
-	const maxMatchesPerRepo = 8
-
 	for _, repo := range repos {
 		if repo.Owner != bsrOwnerFilter {
 			continue
@@ -198,14 +204,17 @@ func (r *UnifiedRegistry) SearchRegistry(ctx context.Context, query string) ([]S
 					fullName,
 				)
 
+				localNames := toolNamesByRef[bsrRef]
 				candidate := SearchCandidate{
-					Owner:      repo.Owner,
-					Repository: repo.Repository,
-					Message:    fullName,
-					BsrRef:     bsrRef,
+					Owner:       repo.Owner,
+					Repository:  repo.Repository,
+					Message:     fullName,
+					Description: descriptionFromMessageName(name),
+					BsrRef:      bsrRef,
+					Callable:    len(localNames) > 0,
 				}
-				if names := toolNamesByRef[bsrRef]; len(names) > 0 {
-					candidate.LocalToolNames = names
+				if len(localNames) > 0 {
+					candidate.LocalToolNames = localNames
 				}
 
 				if !seen[bsrRef] {
@@ -250,4 +259,38 @@ func (r *UnifiedRegistry) toolNamesByBsrRef() map[string][]string {
 		names[bsrRef] = append(names[bsrRef], name)
 	}
 	return names
+}
+
+// descriptionFromMessageName derives a human-readable description from a proto
+// message name by splitting on camelCase boundaries and stripping common
+// suffixes like "Request", "Event", "Task", "Call". For example,
+// "SearchIssuesRequest" becomes "Search issues".
+func descriptionFromMessageName(name string) string {
+	// Split camelCase into words.
+	var words []string
+	start := 0
+	for i := 1; i < len(name); i++ {
+		if name[i] >= 'A' && name[i] <= 'Z' {
+			words = append(words, name[start:i])
+			start = i
+		}
+	}
+	words = append(words, name[start:])
+
+	// Strip trailing suffix words that are proto conventions, not semantics.
+	suffixes := map[string]bool{"Request": true, "Event": true, "Task": true, "Call": true}
+	if len(words) > 1 && suffixes[words[len(words)-1]] {
+		words = words[:len(words)-1]
+	}
+
+	if len(words) == 0 {
+		return name
+	}
+
+	// Lowercase all words except the first, then join.
+	result := words[0]
+	for _, w := range words[1:] {
+		result += " " + strings.ToLower(w)
+	}
+	return result
 }

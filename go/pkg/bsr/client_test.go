@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
@@ -94,6 +95,26 @@ func TestParseRef_Errors(t *testing.T) {
 		if err == nil {
 			t.Errorf("Expected error for ref %s, got nil", tt.ref)
 		}
+	}
+}
+
+func TestNewClientWithTimeout(t *testing.T) {
+	c := NewClientWithTimeout(5 * time.Second)
+	if c == nil {
+		t.Fatal("NewClientWithTimeout returned nil")
+	}
+	if c.httpClient.Timeout != 5*time.Second {
+		t.Errorf("Expected 5s timeout, got %v", c.httpClient.Timeout)
+	}
+}
+
+func TestNewClientDefaultTimeout(t *testing.T) {
+	c := NewClient()
+	if c == nil {
+		t.Fatal("NewClient returned nil")
+	}
+	if c.httpClient.Timeout != defaultHTTPTimeout {
+		t.Errorf("Expected default timeout %v, got %v", defaultHTTPTimeout, c.httpClient.Timeout)
 	}
 }
 
