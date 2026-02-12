@@ -30,6 +30,7 @@ type Registry struct {
 	cache  map[string]*cacheEntry
 }
 
+// NewRegistry creates a Registry that resolves dynamic protobuf types via the given BSR client.
 func NewRegistry(client *Client) *Registry {
 	return &Registry{
 		client: client,
@@ -38,6 +39,7 @@ func NewRegistry(client *Client) *Registry {
 	}
 }
 
+// MaxCacheSize is the maximum number of FileDescriptorSet entries cached by the Registry.
 const MaxCacheSize = 100
 
 // Resolve fetches and registers the schema for a BSR reference.

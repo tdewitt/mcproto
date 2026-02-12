@@ -332,6 +332,55 @@ func TestJSONHandler_DirectToolCall_UnknownTool(t *testing.T) {
 	}
 }
 
+func TestJSONHandler_ListTools_CapsAt200(t *testing.T) {
+	reg := registry.NewUnifiedRegistry(nil)
+	// Register 250 tools. All lowercase names to avoid alias expansion.
+	for i := 0; i < 250; i++ {
+		name := fmt.Sprintf("tool_%03d", i)
+		reg.Register(&mcp.Tool{
+			Name:        name,
+			Description: fmt.Sprintf("Tool %d", i),
+		}, func(ctx context.Context, args []byte) (*mcp.ToolResult, error) {
+			return &mcp.ToolResult{}, nil
+		})
+	}
+
+	handler := NewJSONHandler(reg, nil)
+	input := `{"jsonrpc":"2.0","id":10,"method":"tools/list"}`
+	output := &bytes.Buffer{}
+
+	rw := &combinedReadWriter{
+		Reader: strings.NewReader(input),
+		Writer: output,
+	}
+
+	if err := handler.Handle(rw); err != nil {
+		t.Fatalf("Handle failed: %v", err)
+	}
+
+	var resp map[string]interface{}
+	if err := json.Unmarshal(output.Bytes(), &resp); err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
+	}
+
+	result := resp["result"].(map[string]interface{})
+	tools := result["tools"].([]interface{})
+
+	// 3 meta-tools + 197 registry tools = 200 max.
+	if len(tools) > maxJSONListTools {
+		t.Fatalf("Expected at most %d tools, got %d", maxJSONListTools, len(tools))
+	}
+
+	// Verify meta-tools are first.
+	metaNames := []string{"search_registry", "resolve_schema", "call_tool"}
+	for i, name := range metaNames {
+		tool := tools[i].(map[string]interface{})
+		if tool["name"] != name {
+			t.Errorf("Expected meta-tool[%d] = %q, got %v", i, name, tool["name"])
+		}
+	}
+}
+
 type fakeResolver struct {
 	mt protoreflect.MessageType
 }

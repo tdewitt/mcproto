@@ -84,6 +84,71 @@ func (r *UnifiedRegistry) PopulateGitHubTools(s *ghpb.Server) {
 		)
 		return mcpText(output), nil
 	}, "github", []string{"github", "source-control"})
+
+	// ListIssues
+	r.RegisterWithCategory(&mcp.Tool{
+		Name:        "ListIssues",
+		Description: "List issues in a GitHub repository with optional filtering by state, sort, and direction.",
+		SchemaSource: &mcp.Tool_BsrRef{
+			BsrRef: githubBsrBase + "ListIssuesRequest:" + githubBsrVersion,
+		},
+	}, func(ctx context.Context, args []byte) (*mcp.ToolResult, error) {
+		req := &ghpb.ListIssuesRequest{}
+		if err := proto.Unmarshal(args, req); err != nil {
+			return nil, fmt.Errorf("invalid ListIssuesRequest: %w", err)
+		}
+
+		resp, err := s.ListIssues(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+
+		var b strings.Builder
+		b.WriteString(fmt.Sprintf("Issues for %s/%s:\n", req.GetOwner(), req.GetRepo()))
+		for _, issue := range resp.GetIssues() {
+			b.WriteString(fmt.Sprintf("- #%d [%s] %s (%s)\n",
+				issue.GetNumber(),
+				issue.GetState(),
+				issue.GetTitle(),
+				issue.GetHtmlUrl(),
+			))
+		}
+		if len(resp.GetIssues()) == 0 {
+			b.WriteString("No issues found.")
+		}
+
+		return mcpText(strings.TrimSpace(b.String())), nil
+	}, "github", []string{"github", "source-control"})
+
+	// CreateOrUpdateFile
+	r.RegisterWithCategory(&mcp.Tool{
+		Name:        "CreateOrUpdateFile",
+		Description: "Create or update a file in a GitHub repository. Provide sha to update an existing file.",
+		SchemaSource: &mcp.Tool_BsrRef{
+			BsrRef: githubBsrBase + "CreateOrUpdateFileRequest:" + githubBsrVersion,
+		},
+	}, func(ctx context.Context, args []byte) (*mcp.ToolResult, error) {
+		req := &ghpb.CreateOrUpdateFileRequest{}
+		if err := proto.Unmarshal(args, req); err != nil {
+			return nil, fmt.Errorf("invalid CreateOrUpdateFileRequest: %w", err)
+		}
+
+		resp, err := s.CreateOrUpdateFile(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+
+		content := resp.GetContent()
+		commit := resp.GetCommit()
+		output := fmt.Sprintf("File committed: %s\nPath: %s\nSHA: %s\nCommit: %s\nURL: %s",
+			content.GetName(),
+			content.GetPath(),
+			content.GetSha(),
+			commit.GetSha(),
+			content.GetHtmlUrl(),
+		)
+		return mcpText(output), nil
+	}, "github", []string{"github", "source-control"})
 }
 
 func mcpText(text string) *mcp.ToolResult {

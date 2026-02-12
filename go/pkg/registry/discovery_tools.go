@@ -75,6 +75,8 @@ func (r *UnifiedRegistry) PopulateDiscoveryTools() {
 type listToolsRequest struct {
 	Category string `json:"category"`
 	Query    string `json:"query"`
+	PageSize int    `json:"page_size"`
+	Cursor   string `json:"cursor"`
 }
 
 // listToolEntry is a single tool in the list_tools response.
@@ -98,14 +100,7 @@ func (r *UnifiedRegistry) handleListTools(args []byte) (*mcp.ToolResult, error) 
 		query = strings.TrimSpace(req.Query)
 	}
 
-	tools := r.List(query)
-
-	// Deduplicate: the caller gets canonical + alias entries, keep them all
-	// but cap the output so it stays useful.
-	const maxResults = 200
-	if len(tools) > maxResults {
-		tools = tools[:maxResults]
-	}
+	tools, nextCursor := r.ListPaginated(query, req.PageSize, req.Cursor)
 
 	entries := make([]listToolEntry, 0, len(tools))
 	for _, t := range tools {
@@ -123,6 +118,7 @@ func (r *UnifiedRegistry) handleListTools(args []byte) (*mcp.ToolResult, error) 
 	payload, err := json.Marshal(map[string]interface{}{
 		"query":                query,
 		"total_count":          len(entries),
+		"next_cursor":          nextCursor,
 		"categories_available": r.Categories(),
 		"counts_by_category":   r.CountByCategory(),
 		"tools":                entries,

@@ -79,6 +79,10 @@ func (r *UnifiedRegistry) RegisterAlias(canonical string, alias string) error {
 	return nil
 }
 
+// DefaultPageSize is the number of tools returned per page when no page_size
+// is specified in a paginated listing request.
+const DefaultPageSize = 50
+
 // scoredTool holds a tool and its relevance score for sorted output.
 type scoredTool struct {
 	tool  *mcp.Tool
@@ -155,6 +159,49 @@ func (r *UnifiedRegistry) List(query string) []*mcp.Tool {
 		out[i] = s.tool
 	}
 	return out
+}
+
+// ListPaginated returns a page of tools matching the query.
+// pageSize of 0 uses DefaultPageSize. cursor is the tool name to start after
+// (empty string means start from the beginning). nextCursor is empty when
+// there are no more results.
+func (r *UnifiedRegistry) ListPaginated(query string, pageSize int, cursor string) (tools []*mcp.Tool, nextCursor string) {
+	if pageSize <= 0 {
+		pageSize = DefaultPageSize
+	}
+
+	all := r.List(query)
+
+	// Find the starting index: skip past the cursor tool.
+	startIdx := 0
+	if cursor != "" {
+		for i, t := range all {
+			if t.Name == cursor {
+				startIdx = i + 1
+				break
+			}
+		}
+	}
+
+	// Slice the page from the sorted results.
+	if startIdx >= len(all) {
+		return nil, ""
+	}
+
+	end := startIdx + pageSize
+	if end > len(all) {
+		end = len(all)
+	}
+
+	page := all[startIdx:end]
+
+	// Determine the next cursor: the name of the last tool in this page,
+	// but only if there are more results beyond.
+	if end < len(all) {
+		nextCursor = page[len(page)-1].Name
+	}
+
+	return page, nextCursor
 }
 
 // scoreMatch computes a relevance score for a tool given a lowercase query.

@@ -8,10 +8,17 @@ import (
 	"github.com/misfitdev/proto-mcp/go/mcp"
 	"github.com/misfitdev/proto-mcp/go/pkg/registry"
 	"github.com/misfitdev/proto-mcp/go/stdio"
+	"google.golang.org/protobuf/proto"
 )
 
+// MaxSessionMemory is the per-connection memory budget in bytes.
+// Once cumulative message bytes exceed this limit the handler returns an error
+// and the connection is closed.
+const MaxSessionMemory = 256 * 1024 * 1024 // 256MB per session
+
 type BinaryHandler struct {
-	registry *registry.UnifiedRegistry
+	registry   *registry.UnifiedRegistry
+	memoryUsed int64
 }
 
 func NewBinaryHandler(r *registry.UnifiedRegistry) *BinaryHandler {
@@ -29,6 +36,27 @@ func (h *BinaryHandler) Handle(rw io.ReadWriter) error {
 				return nil
 			}
 			return fmt.Errorf("binary handler read error: %w", err)
+		}
+
+		// Track cumulative message size against the session budget.
+		msgSize := int64(proto.Size(msg))
+		h.memoryUsed += msgSize
+		if h.memoryUsed > MaxSessionMemory {
+			errResp := &mcp.MCPMessage{
+				Id: msg.Id,
+				Payload: &mcp.MCPMessage_CallToolResponse{
+					CallToolResponse: &mcp.CallToolResponse{
+						Result: &mcp.CallToolResponse_Error{
+							Error: &mcp.Error{
+								Code:    -32603,
+								Message: fmt.Sprintf("session memory limit exceeded (%d bytes used, limit %d bytes)", h.memoryUsed, MaxSessionMemory),
+							},
+						},
+					},
+				},
+			}
+			_ = writer.WriteMessage(errResp)
+			return fmt.Errorf("session memory limit exceeded: %d bytes", h.memoryUsed)
 		}
 
 		switch payload := msg.Payload.(type) {

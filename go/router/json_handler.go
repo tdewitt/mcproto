@@ -206,6 +206,12 @@ func readContentLengthBody(reader *bufio.Reader) ([]byte, error) {
 	return body, nil
 }
 
+// maxJSONListTools is the maximum number of tools returned by a JSON-RPC
+// tools/list response. This includes the 3 meta-tools plus the first page
+// of registry tools. MCP clients typically fetch all tools upfront, so a
+// reasonable cap avoids oversized responses while remaining useful.
+const maxJSONListTools = 200
+
 func (h *JSONHandler) listTools() []map[string]interface{} {
 	// Start with meta-tools that are always available regardless of registry.
 	result := metaToolDefinitions()
@@ -214,8 +220,14 @@ func (h *JSONHandler) listTools() []map[string]interface{} {
 		return result
 	}
 
-	// Append all registered tools from the registry.
-	protoTools := h.registry.List("")
+	// Fetch the first page of registry tools. Reserve room for meta-tools
+	// already in the result slice.
+	pageSize := maxJSONListTools - len(result)
+	if pageSize <= 0 {
+		return result
+	}
+
+	protoTools, _ := h.registry.ListPaginated("", pageSize, "")
 	for _, tool := range protoTools {
 		toolJSON := map[string]interface{}{
 			"name":        tool.Name,

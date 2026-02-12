@@ -51,12 +51,14 @@ const commentFields = `
 	id body user { id name } createdAt updatedAt url
 `
 
+// Client is a GraphQL client for the Linear project-tracking API.
 type Client struct {
 	httpClient *http.Client
 	apiKey     string
 	apiURL     string // defaults to linearAPIURL, overridable for tests
 }
 
+// NewClient creates a Linear client from the LINEAR_API_KEY environment variable.
 func NewClient() (*Client, error) {
 	apiKey := strings.TrimSpace(os.Getenv("LINEAR_API_KEY"))
 	if apiKey == "" {
@@ -65,6 +67,7 @@ func NewClient() (*Client, error) {
 	return NewClientWithConfig(apiKey, &http.Client{Timeout: defaultTimeout})
 }
 
+// NewClientWithConfig creates a Linear client with an explicit API key and HTTP client.
 func NewClientWithConfig(apiKey string, httpClient *http.Client) (*Client, error) {
 	if strings.TrimSpace(apiKey) == "" {
 		return nil, fmt.Errorf("linear api key is required")
@@ -86,6 +89,7 @@ func (c *Client) SetAPIURL(url string) { c.apiURL = url }
 // 1. ListIssues
 // ---------------------------------------------------------------------------
 
+// ListIssues returns a paginated list of Linear issues, optionally filtered by team, assignee, state, label, project, or cycle.
 func (c *Client) ListIssues(ctx context.Context, req *ListIssuesRequest) (*ListIssuesResponse, error) {
 	if req == nil {
 		req = &ListIssuesRequest{}
@@ -147,6 +151,7 @@ func (c *Client) ListIssues(ctx context.Context, req *ListIssuesRequest) (*ListI
 // 2. GetIssue
 // ---------------------------------------------------------------------------
 
+// GetIssue retrieves a single Linear issue by UUID or identifier (e.g., "ENG-123").
 func (c *Client) GetIssue(ctx context.Context, req *GetIssueRequest) (*GetIssueResponse, error) {
 	if req == nil {
 		return nil, fmt.Errorf("get issue request is required")
@@ -175,6 +180,7 @@ func (c *Client) GetIssue(ctx context.Context, req *GetIssueRequest) (*GetIssueR
 // 3. CreateIssue
 // ---------------------------------------------------------------------------
 
+// CreateIssue creates a new issue in Linear and returns the created issue.
 func (c *Client) CreateIssue(ctx context.Context, req *CreateIssueRequest) (*CreateIssueResponse, error) {
 	if req == nil {
 		return nil, fmt.Errorf("create issue request is required")
@@ -234,6 +240,7 @@ func (c *Client) CreateIssue(ctx context.Context, req *CreateIssueRequest) (*Cre
 // 4. UpdateIssue
 // ---------------------------------------------------------------------------
 
+// UpdateIssue modifies one or more fields on an existing Linear issue.
 func (c *Client) UpdateIssue(ctx context.Context, req *UpdateIssueRequest) (*UpdateIssueResponse, error) {
 	if req == nil {
 		return nil, fmt.Errorf("update issue request is required")
@@ -293,6 +300,7 @@ func (c *Client) UpdateIssue(ctx context.Context, req *UpdateIssueRequest) (*Upd
 // 5. DeleteIssue
 // ---------------------------------------------------------------------------
 
+// DeleteIssue permanently deletes a Linear issue by ID.
 func (c *Client) DeleteIssue(ctx context.Context, req *DeleteIssueRequest) (*DeleteIssueResponse, error) {
 	if req == nil {
 		return nil, fmt.Errorf("delete issue request is required")
@@ -319,6 +327,7 @@ func (c *Client) DeleteIssue(ctx context.Context, req *DeleteIssueRequest) (*Del
 // 6. SearchIssues
 // ---------------------------------------------------------------------------
 
+// SearchIssues performs a full-text search across Linear issues and returns matching results.
 func (c *Client) SearchIssues(ctx context.Context, req *SearchIssuesRequest) (*SearchIssuesResponse, error) {
 	if req == nil {
 		return nil, fmt.Errorf("search issues request is required")
@@ -363,6 +372,7 @@ func (c *Client) SearchIssues(ctx context.Context, req *SearchIssuesRequest) (*S
 // 7. ListProjects
 // ---------------------------------------------------------------------------
 
+// ListProjects returns a paginated list of Linear projects.
 func (c *Client) ListProjects(ctx context.Context, req *ListProjectsRequest) (*ListProjectsResponse, error) {
 	if req == nil {
 		req = &ListProjectsRequest{}
@@ -401,6 +411,7 @@ func (c *Client) ListProjects(ctx context.Context, req *ListProjectsRequest) (*L
 // 8. GetProject
 // ---------------------------------------------------------------------------
 
+// GetProject retrieves a single Linear project by ID.
 func (c *Client) GetProject(ctx context.Context, req *GetProjectRequest) (*GetProjectResponse, error) {
 	if req == nil {
 		return nil, fmt.Errorf("get project request is required")
@@ -426,6 +437,7 @@ func (c *Client) GetProject(ctx context.Context, req *GetProjectRequest) (*GetPr
 // 9. CreateProjectUpdate
 // ---------------------------------------------------------------------------
 
+// CreateProjectUpdate posts a status update to a Linear project.
 func (c *Client) CreateProjectUpdate(ctx context.Context, req *CreateProjectUpdateRequest) (*CreateProjectUpdateResponse, error) {
 	if req == nil {
 		return nil, fmt.Errorf("create project update request is required")
@@ -467,6 +479,7 @@ func (c *Client) CreateProjectUpdate(ctx context.Context, req *CreateProjectUpda
 // 10. ListProjectUpdates
 // ---------------------------------------------------------------------------
 
+// ListProjectUpdates returns a paginated list of status updates for a Linear project.
 func (c *Client) ListProjectUpdates(ctx context.Context, req *ListProjectUpdatesRequest) (*ListProjectUpdatesResponse, error) {
 	if req == nil {
 		return nil, fmt.Errorf("list project updates request is required")
@@ -511,6 +524,7 @@ func (c *Client) ListProjectUpdates(ctx context.Context, req *ListProjectUpdates
 // 11. ListTeams
 // ---------------------------------------------------------------------------
 
+// ListTeams returns a paginated list of teams in the Linear workspace.
 func (c *Client) ListTeams(ctx context.Context, req *ListTeamsRequest) (*ListTeamsResponse, error) {
 	if req == nil {
 		req = &ListTeamsRequest{}
@@ -555,6 +569,7 @@ func (c *Client) ListTeams(ctx context.Context, req *ListTeamsRequest) (*ListTea
 // 12. ListMembers
 // ---------------------------------------------------------------------------
 
+// ListMembers returns a paginated list of users in the Linear workspace.
 func (c *Client) ListMembers(ctx context.Context, req *ListMembersRequest) (*ListMembersResponse, error) {
 	if req == nil {
 		req = &ListMembersRequest{}
@@ -593,6 +608,7 @@ func (c *Client) ListMembers(ctx context.Context, req *ListMembersRequest) (*Lis
 // 13. AddComment
 // ---------------------------------------------------------------------------
 
+// AddComment creates a comment on a Linear issue.
 func (c *Client) AddComment(ctx context.Context, req *AddCommentRequest) (*AddCommentResponse, error) {
 	if req == nil {
 		return nil, fmt.Errorf("add comment request is required")
@@ -629,6 +645,7 @@ func (c *Client) AddComment(ctx context.Context, req *AddCommentRequest) (*AddCo
 // 14. ListComments
 // ---------------------------------------------------------------------------
 
+// ListComments returns a paginated list of comments on a Linear issue.
 func (c *Client) ListComments(ctx context.Context, req *ListCommentsRequest) (*ListCommentsResponse, error) {
 	if req == nil {
 		return nil, fmt.Errorf("list comments request is required")
@@ -676,6 +693,7 @@ func (c *Client) ListComments(ctx context.Context, req *ListCommentsRequest) (*L
 // 15. ListLabels
 // ---------------------------------------------------------------------------
 
+// ListLabels returns a paginated list of issue labels, optionally filtered by team.
 func (c *Client) ListLabels(ctx context.Context, req *ListLabelsRequest) (*ListLabelsResponse, error) {
 	if req == nil {
 		req = &ListLabelsRequest{}
@@ -738,6 +756,7 @@ func (c *Client) ListLabels(ctx context.Context, req *ListLabelsRequest) (*ListL
 // 16. ListCycles
 // ---------------------------------------------------------------------------
 
+// ListCycles returns a paginated list of cycles, optionally filtered by team.
 func (c *Client) ListCycles(ctx context.Context, req *ListCyclesRequest) (*ListCyclesResponse, error) {
 	if req == nil {
 		req = &ListCyclesRequest{}
@@ -801,6 +820,7 @@ func (c *Client) ListCycles(ctx context.Context, req *ListCyclesRequest) (*ListC
 // 17. ListDocuments
 // ---------------------------------------------------------------------------
 
+// ListDocuments returns a paginated list of documents in the Linear workspace.
 func (c *Client) ListDocuments(ctx context.Context, req *ListDocumentsRequest) (*ListDocumentsResponse, error) {
 	if req == nil {
 		req = &ListDocumentsRequest{}
@@ -839,6 +859,7 @@ func (c *Client) ListDocuments(ctx context.Context, req *ListDocumentsRequest) (
 // 18. GetDocument
 // ---------------------------------------------------------------------------
 
+// GetDocument retrieves a single Linear document by ID.
 func (c *Client) GetDocument(ctx context.Context, req *GetDocumentRequest) (*GetDocumentResponse, error) {
 	if req == nil {
 		return nil, fmt.Errorf("get document request is required")
@@ -864,6 +885,7 @@ func (c *Client) GetDocument(ctx context.Context, req *GetDocumentRequest) (*Get
 // 19. SearchDocuments
 // ---------------------------------------------------------------------------
 
+// SearchDocuments performs a full-text search across Linear documents.
 func (c *Client) SearchDocuments(ctx context.Context, req *SearchDocumentsRequest) (*SearchDocumentsResponse, error) {
 	if req == nil {
 		return nil, fmt.Errorf("search documents request is required")
@@ -908,6 +930,7 @@ func (c *Client) SearchDocuments(ctx context.Context, req *SearchDocumentsReques
 // 20. ListWorkflowStates
 // ---------------------------------------------------------------------------
 
+// ListWorkflowStates returns a paginated list of workflow states, optionally filtered by team.
 func (c *Client) ListWorkflowStates(ctx context.Context, req *ListWorkflowStatesRequest) (*ListWorkflowStatesResponse, error) {
 	if req == nil {
 		req = &ListWorkflowStatesRequest{}
@@ -970,6 +993,7 @@ func (c *Client) ListWorkflowStates(ctx context.Context, req *ListWorkflowStates
 // 21. GetViewer
 // ---------------------------------------------------------------------------
 
+// GetViewer returns the currently authenticated Linear user.
 func (c *Client) GetViewer(ctx context.Context, _ *GetViewerRequest) (*GetViewerResponse, error) {
 	query := `query { viewer { id name displayName email active admin } }`
 	data, err := c.do(ctx, query, nil)

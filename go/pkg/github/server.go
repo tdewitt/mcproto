@@ -11,11 +11,13 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+// Server implements the GitHub gRPC service backed by the go-github SDK.
 type Server struct {
 	UnimplementedGitHubServiceServer
 	client *gh.Client
 }
 
+// NewServer creates a GitHub server using the GITHUB_PERSONAL_ACCESS_TOKEN environment variable.
 func NewServer() (*Server, error) {
 	token := os.Getenv("GITHUB_PERSONAL_ACCESS_TOKEN")
 	if token == "" {
@@ -33,6 +35,7 @@ func NewServer() (*Server, error) {
 	}, nil
 }
 
+// SearchRepositories searches GitHub repositories by query string and returns paginated results.
 func (s *Server) SearchRepositories(ctx context.Context, req *SearchRepositoriesRequest) (*SearchRepositoriesResponse, error) {
 	opts := &gh.SearchOptions{
 		ListOptions: gh.ListOptions{
@@ -115,6 +118,7 @@ func convertUser(u *gh.User) *User {
 	}
 }
 
+// ListIssues returns issues for a GitHub repository, filtered by state, sort, and direction.
 func (s *Server) ListIssues(ctx context.Context, req *ListIssuesRequest) (*ListIssuesResponse, error) {
 	opts := &gh.IssueListByRepoOptions{
 		State:     req.GetState(),
@@ -164,6 +168,7 @@ func convertIssue(i *gh.Issue) *Issue {
 	return issue
 }
 
+// CreateIssue creates a new issue in a GitHub repository.
 func (s *Server) CreateIssue(ctx context.Context, req *CreateIssueRequest) (*CreateIssueResponse, error) {
 	title := strings.TrimSpace(req.GetTitle())
 	if title == "" {
@@ -195,6 +200,7 @@ func (s *Server) CreateIssue(ctx context.Context, req *CreateIssueRequest) (*Cre
 	}, nil
 }
 
+// CreateOrUpdateFile creates or updates a file in a GitHub repository and returns the commit.
 func (s *Server) CreateOrUpdateFile(ctx context.Context, req *CreateOrUpdateFileRequest) (*FileCommitResponse, error) {
 	opts := &gh.RepositoryContentFileOptions{
 		Message: &req.Message,

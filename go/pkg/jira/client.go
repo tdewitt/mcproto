@@ -22,6 +22,7 @@ const (
 	defaultSearchMaxResult = 50
 )
 
+// Client is an HTTP client for the Jira and Jira Service Management REST APIs.
 type Client struct {
 	baseURL    string
 	httpClient *http.Client
@@ -29,6 +30,7 @@ type Client struct {
 	apiToken   string
 }
 
+// SearchOptions configures pagination, field selection, and expansion for issue searches.
 type SearchOptions struct {
 	Fields     []string
 	StartAt    int
@@ -36,6 +38,7 @@ type SearchOptions struct {
 	Expand     []string
 }
 
+// SearchResult holds a page of issues returned by SearchIssues.
 type SearchResult struct {
 	Issues []*Issue `json:"issues"`
 	Total  int      `json:"total"`
@@ -48,6 +51,7 @@ type issueWire struct {
 	Fields map[string]any `json:"fields"`
 }
 
+// NewClient creates a Jira client from JIRA_URL, JIRA_EMAIL, and JIRA_API_TOKEN environment variables.
 func NewClient() (*Client, error) {
 	baseURL := strings.TrimSpace(os.Getenv("JIRA_URL"))
 	email := strings.TrimSpace(os.Getenv("JIRA_EMAIL"))
@@ -58,6 +62,7 @@ func NewClient() (*Client, error) {
 	return NewClientWithConfig(baseURL, email, token, &http.Client{Timeout: defaultTimeout})
 }
 
+// NewClientWithConfig creates a Jira client with explicit base URL, credentials, and HTTP client.
 func NewClientWithConfig(baseURL, email, token string, httpClient *http.Client) (*Client, error) {
 	if strings.TrimSpace(baseURL) == "" {
 		return nil, fmt.Errorf("jira base URL is required")
@@ -79,6 +84,7 @@ func NewClientWithConfig(baseURL, email, token string, httpClient *http.Client) 
 	}, nil
 }
 
+// SearchIssues queries Jira using JQL and returns a paginated list of matching issues.
 func (c *Client) SearchIssues(ctx context.Context, jql string, opts SearchOptions) (*SearchResult, error) {
 	jql = strings.TrimSpace(jql)
 	if jql == "" {
@@ -120,6 +126,7 @@ func (c *Client) SearchIssues(ctx context.Context, jql string, opts SearchOption
 	}, nil
 }
 
+// GetIssue retrieves a single Jira issue by its key (e.g., "PROJ-123").
 func (c *Client) GetIssue(ctx context.Context, key string) (*Issue, error) {
 	key = strings.TrimSpace(key)
 	if key == "" {
@@ -133,6 +140,7 @@ func (c *Client) GetIssue(ctx context.Context, key string) (*Issue, error) {
 	return toProtoIssue(raw), nil
 }
 
+// CreateIssue creates a new Jira issue and returns its key and ID.
 func (c *Client) CreateIssue(ctx context.Context, req *CreateIssueRequest) (*CreateIssueResponse, error) {
 	if req == nil {
 		return nil, fmt.Errorf("create issue request is required")
@@ -183,6 +191,7 @@ func (c *Client) CreateIssue(ctx context.Context, req *CreateIssueRequest) (*Cre
 	return &resp, nil
 }
 
+// UpdateIssue modifies one or more fields on an existing Jira issue.
 func (c *Client) UpdateIssue(ctx context.Context, req *UpdateIssueRequest) (*UpdateIssueResponse, error) {
 	if req == nil {
 		return nil, fmt.Errorf("update issue request is required")
@@ -233,6 +242,7 @@ func (c *Client) UpdateIssue(ctx context.Context, req *UpdateIssueRequest) (*Upd
 	return &UpdateIssueResponse{Success: true}, nil
 }
 
+// TransitionIssue moves a Jira issue to a new workflow state by transition ID.
 func (c *Client) TransitionIssue(ctx context.Context, req *TransitionIssueRequest) (*TransitionIssueResponse, error) {
 	if req == nil {
 		return nil, fmt.Errorf("transition request is required")
@@ -273,6 +283,7 @@ func (c *Client) TransitionIssue(ctx context.Context, req *TransitionIssueReques
 	return &TransitionIssueResponse{Success: true}, nil
 }
 
+// AddComment adds a comment to a Jira issue, with optional visibility restrictions.
 func (c *Client) AddComment(ctx context.Context, req *AddCommentRequest) (*AddCommentResponse, error) {
 	if req == nil {
 		return nil, fmt.Errorf("add comment request is required")
@@ -306,6 +317,7 @@ func (c *Client) AddComment(ctx context.Context, req *AddCommentRequest) (*AddCo
 	return &resp, nil
 }
 
+// AssignIssue assigns a Jira issue to the user identified by account ID.
 func (c *Client) AssignIssue(ctx context.Context, req *AssignIssueRequest) (*AssignIssueResponse, error) {
 	if req == nil {
 		return nil, fmt.Errorf("assign issue request is required")
@@ -325,6 +337,7 @@ func (c *Client) AssignIssue(ctx context.Context, req *AssignIssueRequest) (*Ass
 	return &AssignIssueResponse{Success: true}, nil
 }
 
+// GetTransitions returns the available workflow transitions for a Jira issue.
 func (c *Client) GetTransitions(ctx context.Context, key string) ([]*Transition, error) {
 	key = strings.TrimSpace(key)
 	if key == "" {
@@ -341,6 +354,7 @@ func (c *Client) GetTransitions(ctx context.Context, key string) ([]*Transition,
 	return resp.Transitions, nil
 }
 
+// SearchUsers searches Jira users by display name or email and returns matching accounts.
 func (c *Client) SearchUsers(ctx context.Context, query string, maxResults int32) ([]*User, error) {
 	query = strings.TrimSpace(query)
 	if query == "" {
@@ -360,6 +374,7 @@ func (c *Client) SearchUsers(ctx context.Context, query string, maxResults int32
 	return users, nil
 }
 
+// GetServiceDesks returns a paginated list of JSM service desks.
 func (c *Client) GetServiceDesks(ctx context.Context, req *GetServiceDesksRequest) (*GetServiceDesksResponse, error) {
 	if req == nil {
 		req = &GetServiceDesksRequest{}
@@ -395,6 +410,7 @@ func (c *Client) GetServiceDesks(ctx context.Context, req *GetServiceDesksReques
 	return out, nil
 }
 
+// GetRequestTypes returns the available request types for a JSM service desk.
 func (c *Client) GetRequestTypes(ctx context.Context, req *GetRequestTypesRequest) (*GetRequestTypesResponse, error) {
 	if req == nil {
 		return nil, fmt.Errorf("get request types request is required")
@@ -434,6 +450,7 @@ func (c *Client) GetRequestTypes(ctx context.Context, req *GetRequestTypesReques
 	return out, nil
 }
 
+// CreateRequest creates a new customer request in a JSM service desk.
 func (c *Client) CreateRequest(ctx context.Context, req *CreateRequestRequest) (*CreateRequestResponse, error) {
 	if req == nil {
 		return nil, fmt.Errorf("create request is required")
@@ -473,6 +490,7 @@ func (c *Client) CreateRequest(ctx context.Context, req *CreateRequestRequest) (
 	}, nil
 }
 
+// GetRequest retrieves a JSM customer request by issue ID or key.
 func (c *Client) GetRequest(ctx context.Context, req *GetRequestRequest) (*GetRequestResponse, error) {
 	if req == nil {
 		return nil, fmt.Errorf("get request request is required")
@@ -503,6 +521,7 @@ func (c *Client) GetRequest(ctx context.Context, req *GetRequestRequest) (*GetRe
 	}, nil
 }
 
+// AddRequestComment adds a public or internal comment to a JSM customer request.
 func (c *Client) AddRequestComment(ctx context.Context, req *AddRequestCommentRequest) (*AddRequestCommentResponse, error) {
 	if req == nil {
 		return nil, fmt.Errorf("add request comment request is required")
@@ -532,6 +551,7 @@ func (c *Client) AddRequestComment(ctx context.Context, req *AddRequestCommentRe
 	}, nil
 }
 
+// GetOrganizations returns a paginated list of JSM organizations.
 func (c *Client) GetOrganizations(ctx context.Context, req *GetOrganizationsRequest) (*GetOrganizationsResponse, error) {
 	if req == nil {
 		req = &GetOrganizationsRequest{}
@@ -564,6 +584,7 @@ func (c *Client) GetOrganizations(ctx context.Context, req *GetOrganizationsRequ
 	return out, nil
 }
 
+// GetCustomers returns the users belonging to a JSM organization.
 func (c *Client) GetCustomers(ctx context.Context, req *GetCustomersRequest) (*GetCustomersResponse, error) {
 	if req == nil {
 		return nil, fmt.Errorf("get customers request is required")
@@ -596,6 +617,7 @@ func (c *Client) GetCustomers(ctx context.Context, req *GetCustomersRequest) (*G
 	return out, nil
 }
 
+// GetSlaInfo retrieves SLA metrics for a JSM customer request.
 func (c *Client) GetSlaInfo(ctx context.Context, req *GetSlaInfoRequest) (*GetSlaInfoResponse, error) {
 	if req == nil {
 		return nil, fmt.Errorf("get sla info request is required")
